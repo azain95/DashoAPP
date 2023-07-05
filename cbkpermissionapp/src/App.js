@@ -1,9 +1,9 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
-import DatePicker from 'react-date-picker';
+import DatePicker from 'rsuite/DatePicker';
 import 'react-date-picker/dist/DatePicker.css';
-import TimePicker from 'react-time-picker';
+import { TimePicker } from 'react-ios-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 
 import logo from './logocbk.png';
@@ -190,6 +190,7 @@ function NewPermission() {
           <label htmlFor="endDate">End Date:</label>
           <br />
           <DatePicker
+          
             value={endDate}
             onChange={setEndDate}
             format="yyyy-MM-dd"
@@ -291,6 +292,7 @@ function NewLeave() {
           <label htmlFor="startDate">Start Date:</label>
           <br />
           <DatePicker
+          appearance="default" placeholder="Default" style={{ width: 200 }}
             value={startDate}
             onChange={setStartDate}
             format="yyyy-MM-dd"
@@ -303,6 +305,7 @@ function NewLeave() {
           <label htmlFor="endDate">End Date:</label>
           <br />
           <DatePicker
+          appearance="default" placeholder="Default" style={{ width: 200 }}
             value={endDate}
             onChange={setEndDate}
             format="yyyy-MM-dd"
