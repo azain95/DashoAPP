@@ -1,10 +1,13 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
-import DatePicker from 'rsuite/DatePicker';
-import 'react-date-picker/dist/DatePicker.css';
+import DatePicker from 'react-datepicker';
+
+import "react-datepicker/dist/react-datepicker.css";
+
 import { TimePicker } from 'react-ios-time-picker';
-import 'react-time-picker/dist/TimePicker.css';
+
+
 
 import logo from './logocbk.png';
 import './App.css';
@@ -176,8 +179,8 @@ function NewPermission() {
             value={startDate}
             onChange={setStartDate}
             format="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
+            calendarIcon={logo}
+            clearIcon={logo}
             required
           />
         </div>
