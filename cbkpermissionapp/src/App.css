@@ -2,10 +2,16 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300&display=swap');
 
-
 .App {
   text-align: center;
   font-family: 'Josefin Sans', sans-serif;
+  input[type='text'],
+  input[type='password'],
+  input[type='date'],
+  select {
+    color: black;
+    background-color: white;
+  }
 }
 
 .dark {
@@ -41,8 +47,6 @@ h2 {
   margin-top: 0;
 }
 
-
-
 form {
   display: flex;
   flex-direction: column;
@@ -55,10 +59,12 @@ label {
 }
 
 input[type='text'],
-input[type='password'] {
+input[type='password'],
+input[type='date'] {
   padding: 5px;
   margin-bottom: 10px;
   width: 100%;
+  text-align: center;
 }
 
 button[type='submit'] {
@@ -178,7 +184,8 @@ nav {
 }
 
 .dark-mode input[type='text'],
-.dark-mode input[type='password'] {
+.dark-mode input[type='password'],
+.dark-mode input[type='date'] {
   background-color: #555;
   color: #fff;
 }
@@ -209,26 +216,35 @@ nav {
   color: #fff;
 }
 
-.dark-mode .react-datepicker__header {
-  background-color: #000;
+/* Add dark mode styles for react-datepicker */
+.dark-mode .react-datepicker-popper .react-datepicker {
+  background-color: #333;
+  border-color: #555;
+}
+
+.dark-mode .react-datepicker-popper .react-datepicker__current-month {
   color: #fff;
 }
 
-.dark-mode .react-datepicker__day {
+.dark-mode .react-datepicker-popper .react-datepicker__day-name,
+.dark-mode .react-datepicker-popper .react-datepicker__day,
+.dark-mode .react-datepicker-popper .react-datepicker__time-name {
   color: #fff;
 }
 
-.dark-mode .react-datepicker__day--selected {
+.dark-mode .react-datepicker-popper .react-datepicker__day:hover,
+.dark-mode .react-datepicker-popper .react-datepicker__month-text:hover,
+.dark-mode .react-datepicker-popper .react-datepicker__quarter-text:hover,
+.dark-mode .react-datepicker-popper .react-datepicker__year-text:hover {
+  background-color: #555;
+  color: #fff;
+}
+
+.dark-mode .react-datepicker-popper .react-datepicker__day--selected,
+.dark-mode .react-datepicker-popper .react-datepicker__day--in-selecting-range,
+.dark-mode .react-datepicker-popper .react-datepicker__day--in-range {
   background-color: #4caf50;
   color: #fff;
-}
-
-.dark-mode .react-datepicker__day--selected:hover {
-  background-color: #45a049;
-}
-
-.dark-mode .react-datepicker__day--keyboard-selected {
-  background-color: #45a049;
 }
 
 /* Responsive Styles */
@@ -238,9 +254,6 @@ nav {
     width: 90%;
   }
 }
-
-
-
 
 .ios-calendar {
   display: inline-block;
@@ -253,4 +266,55 @@ nav {
   color: #000;
   padding: 10px;
   cursor: pointer;
+}
+
+.dark-mode .react-datepicker__input-container input {
+  color: #fff;
+  background-color: #555;
+}
+
+.dark-mode .react-datepicker__day {
+  color: #fff !important;
+}
+
+.dark-mode .react-datepicker__header {
+  background-color: #000;
+  color: #fff;
+}
+
+.dark-mode .react-datepicker__day--selected {
+  background-color: #4caf50 !important;
+  color: #fff !important;
+}
+
+.dark-mode .ios-calendar {
+  background-color: #555;
+  color: #fff;
+}
+
+.react-datepicker__input-container,
+.react-ios-time-picker-input {
+  text-align: center;
+}
+
+
+.custom-input {
+  text-align: center;
+  background-color: #ffffff;
+  color: #000000;
+  /* add other styling as needed */
+}
+
+.date-picker-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  right: 50px;
+}
+
+.react-datepicker-ignore-onclickoutsid{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
