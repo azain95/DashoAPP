@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 
-import "react-datepicker/dist/react-datepicker.css";
+
+import 'react-datepicker/dist/react-datepicker.css';
+
 
 import { TimePicker } from 'react-ios-time-picker';
 
@@ -143,6 +145,14 @@ function SignUp({ handleSignUp }) {
   );
 }
 
+function CustomInput({ value, onClick }) {
+  return (
+    <button className="custom-input" onClick={onClick}>
+      {value}
+    </button>
+  )
+}
+
 function NewPermission() {
   const [startDate, setStartDate] = useState(new Date());
   const [startTime, setStartTime] = useState('00:00');
@@ -153,9 +163,9 @@ function NewPermission() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const permission = {
-      startDate,
+      startDate: startDate.toISOString(),
       startTime,
-      endDate,
+      endDate: endDate.toISOString(),
       endTime,
       reason,
     };
@@ -176,13 +186,14 @@ function NewPermission() {
           <label htmlFor="startDate">Start Date:</label>
           <br />
           <DatePicker
-            value={startDate}
-            onChange={setStartDate}
-            format="yyyy-MM-dd"
-            calendarIcon={logo}
-            clearIcon={logo}
-            required
-          />
+  selected={startDate}
+  onChange={setStartDate}
+  dateFormat="yyyy-MM-dd"
+  calendarIcon={logo}
+  clearIcon={logo}
+  required
+/>
+
         </div>
         <div>
           <label htmlFor="startTime">Start Time:</label>
@@ -193,14 +204,14 @@ function NewPermission() {
           <label htmlFor="endDate">End Date:</label>
           <br />
           <DatePicker
-          
-            value={endDate}
-            onChange={setEndDate}
-            format="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
+  selected={endDate}
+  onChange={setEndDate}
+  dateFormat="yyyy-MM-dd"
+  calendarIcon={null}
+  clearIcon={null}
+  required
+/>
+
         </div>
         <div>
           <label htmlFor="endTime">End Time:</label>
@@ -295,27 +306,27 @@ function NewLeave() {
           <label htmlFor="startDate">Start Date:</label>
           <br />
           <DatePicker
-          appearance="default" placeholder="Default" style={{ width: 200 }}
-            value={startDate}
-            onChange={setStartDate}
-            format="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
+  selected={startDate}
+  onChange={setStartDate}
+  dateFormat="yyyy-MM-dd"
+  calendarIcon={null}
+  clearIcon={null}
+  required
+/>
+
         </div>
         <div>
           <label htmlFor="endDate">End Date:</label>
           <br />
           <DatePicker
-          appearance="default" placeholder="Default" style={{ width: 200 }}
-            value={endDate}
-            onChange={setEndDate}
-            format="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
+  selected={endDate}
+  onChange={setEndDate}
+  dateFormat="yyyy-MM-dd"
+  calendarIcon={null}
+  clearIcon={null}
+  required
+/>
+
         </div>
         <div>
           <label htmlFor="leaveType">Leave Type:</label>
@@ -408,7 +419,8 @@ function App() {
 
   return (
     <Router>
-      <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
+    <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
+
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
           <h1>Leave and Permission Management</h1>
