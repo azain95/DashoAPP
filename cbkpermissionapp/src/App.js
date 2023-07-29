@@ -1,8 +1,11 @@
 // App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink,Navigate  } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 
+import Box from '@mui/material/Box';
+
+import axios from 'axios';
 
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -48,26 +51,53 @@ function Navbar({ darkMode, toggleDarkMode }) {
     </nav>
   );
 }
+import { useNavigate } from 'react-router-dom';
+import { TextareaAutosize } from '@mui/material';
 
-function SignIn({ handleSignIn }) {
+function SignIn() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
-    const credentials = {
-      username,
-      password,
-    };
-    handleSignIn(credentials);
-    setUsername('');
-    setPassword('');
+
+    try {
+      const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
+
+      // Handle successful sign-in
+      if (response.status === 200 && response.data) {
+        setUsername('');
+        setPassword('');
+        alert(`Welcome ${response.data.name}!`);
+
+          // Store user data in localStorage
+          localStorage.setItem('user', JSON.stringify(response.data));
+          console.log('Stored user:', JSON.parse(localStorage.getItem('user')));
+          console.log('Response data:', response.data);
+        // Redirect to the desired route after successful sign-in
+        navigate("/newpermission");
+      }
+    } catch (error) {
+      // Handle sign-in error
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        alert(error.response.data.error);
+      } else if (error.request) {
+        // The request was made but no response was received
+        alert('No response from server');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        alert('Error in setting up the request');
+      }
+    }
   };
 
   return (
     <div className="credentials">
       <h2 className="form-title">Sign In</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSignIn}>
         <div>
           <label htmlFor="username">Username:</label>
           <input
@@ -97,35 +127,125 @@ function SignIn({ handleSignIn }) {
   );
 }
 
-function SignUp({ handleSignUp }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+
+function SignUp({ handleSignUp }) {
+  const [user_id, setUserId] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const credentials = {
-      username,
-      password,
-    };
-    handleSignUp(credentials);
-    setUsername('');
-    setPassword('');
+
+    // Validate email and mobile number
+    if (!validateEmail(email)) {
+      setError('Invalid email address');
+      return;
+    }
+
+    if (!validateMobile(mobile)) {
+      setError('Invalid mobile number');
+      return;
+    }
+
+    // Perform sign-up logic
+    try {
+      const credentials = {
+        user_id, // sending the user_id to the server
+        name,
+        email,
+        mobile,
+        password,
+      };
+
+      const response = await axios.post('http://localhost:5000/signup', credentials);
+
+      // Handle successful sign-up
+      if (response.status === 200) {
+        // Reset form fields on successful sign-up
+        setUserId('');
+        setName('');
+        setEmail('');
+        setMobile('');
+        setPassword('');
+        setError('');
+        // Redirect to the Sign In route after successful sign-up
+        return <Navigate to="/signin" />;
+      }
+    } catch (error) {
+      if (error.response && error.response.data) {
+        setError(error.response.data.error);
+      } else {
+        setError('Error signing up');
+      }
+    }
+  };
+  // Email validation function
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Mobile number validation function
+  const validateMobile = (mobile) => {
+    const mobileRegex = /^\d{8}$/;
+    return mobileRegex.test(mobile);
   };
 
   return (
     <div className="credentials">
       <h2 className="form-title">Sign Up</h2>
+      {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="username">Username:</label>
+      <div>
+          <label htmlFor="user_id">User ID:</label>
           <input
             type="text"
-            id="username"
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="user_id"
+            name="user_id"
+            value={user_id}
+            onChange={(e) => setUserId(e.target.value)}
+            required
           />
         </div>
+        <div>
+          <label htmlFor="name">Name:</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="mobile">Mobile Number:</label>
+          <input
+            type="text"
+            id="mobile"
+            name="mobile"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div>
+          <label htmlFor="email">Email:</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        
         <div>
           <label htmlFor="password">Password:</label>
           <input
@@ -134,6 +254,7 @@ function SignUp({ handleSignUp }) {
             name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
         <button type="submit">Sign Up</button>
@@ -145,6 +266,7 @@ function SignUp({ handleSignUp }) {
   );
 }
 
+
 function CustomInput({ value, onClick }) {
   return (
     <button className="custom-input" onClick={onClick}>
@@ -153,80 +275,98 @@ function CustomInput({ value, onClick }) {
   )
 }
 
+
+
 function NewPermission() {
   const [startDate, setStartDate] = useState(new Date());
-  const [startTime, setStartTime] = useState('00:00');
+  const [startTime, setStartTime] = useState('12:00');
   const [endDate, setEndDate] = useState(new Date());
-  const [endTime, setEndTime] = useState('00:00');
+  const [endTime, setEndTime] = useState('12:00');
   const [reason, setReason] = useState('');
+  const [user, setUser] = useState(null);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('user'));
+
     const permission = {
-      startDate: startDate.toISOString(),
-      startTime,
-      endDate: endDate.toISOString(),
-      endTime,
-      reason,
+      req_datetime: new Date().toISOString(),
+      req_type: 'permission',
+      date_from: startDate.toISOString(),
+      date_to: endDate.toISOString(),
+      time_from: startTime,
+      time_to: endTime,
+      user_id: user.user_id,
+      reason: reason,
+      status: 'pending',
     };
-    // Perform submission logic here (e.g., API call, data storage)
-    console.log('New Permission:', permission);
-    setStartDate(new Date());
-    setStartTime('00:00');
-    setEndDate(new Date());
-    setEndTime('00:00');
-    setReason('');
+
+    try {
+      const response = await axios.post('http://localhost:5000/requests', permission);
+      console.log(response.data);
+      setStartDate(new Date());
+      setStartTime('12:00');
+      setEndDate(new Date());
+      setEndTime('12:00');
+      setReason('');
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
     <div className="content">
       <h2>New Permission</h2>
       <form onSubmit={handleSubmit}>
-        <div>
+        <div className="form-group">
           <label htmlFor="startDate">Start Date:</label>
-          <br />
+          <br/>
           <DatePicker
-  selected={startDate}
-  onChange={setStartDate}
-  dateFormat="yyyy-MM-dd"
-  calendarIcon={logo}
-  clearIcon={logo}
-  required
-/>
-
+            selected={startDate}
+            onChange={setStartDate}
+            dateFormat="yyyy-MM-dd"
+            calendarIcon={null}
+            clearIcon={null}
+            required
+          />
         </div>
-        <div>
+        <div className="form-group">
           <label htmlFor="startTime">Start Time:</label>
-          <br />
-          <TimePicker value={startTime} onChange={setStartTime} disableClock />
+          <TimePicker value={startTime} onChange={setStartTime} required />
         </div>
-        <div>
+        <div className="form-group">
           <label htmlFor="endDate">End Date:</label>
-          <br />
+          <br/>
           <DatePicker
-  selected={endDate}
-  onChange={setEndDate}
-  dateFormat="yyyy-MM-dd"
-  calendarIcon={null}
-  clearIcon={null}
-  required
-/>
-
+            selected={endDate}
+            onChange={setEndDate}
+            dateFormat="yyyy-MM-dd"
+            calendarIcon={null}
+            clearIcon={null}
+            required
+          />
         </div>
-        <div>
+        <div className="form-group">
           <label htmlFor="endTime">End Time:</label>
-          <br />
-          <TimePicker value={endTime} onChange={setEndTime} disableClock />
+          <TimePicker value={endTime} onChange={setEndTime} required />
         </div>
-        <div>
+        <div className="form-group">
           <label htmlFor="reason">Reason:</label>
-          <br />
-          <input
-            type="text"
+          <br/>
+          <textarea
             id="reason"
             name="reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
+            style={{width: '100%', height: '60px', padding: '10px'}}
+            required
           />
         </div>
         <button type="submit">Submit</button>
@@ -235,32 +375,69 @@ function NewPermission() {
   );
 }
 
+
+
+
 function PermissionHistory() {
   const [permissions, setPermissions] = useState([]);
 
-  // Simulating data fetching with useEffect
   useEffect(() => {
-    // Perform API call or data retrieval here
-    // Update `permissions` state with the fetched data
-    const fetchedPermissions = []; // Replace with actual data fetching logic
-    setPermissions(fetchedPermissions);
+    const fetchPermissionHistory = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`);
+
+        if (response.data && response.data.length > 0) {
+          // Filter to only include permissions
+          const permissionsData = response.data.filter(req => req.req_type.toLowerCase() === 'permission');
+          setPermissions(permissionsData);
+        } else {
+          setPermissions([]);
+        }
+      } catch (error) {
+        console.error('Error retrieving permission history:', error.message);
+        setPermissions([]);
+      }
+    };
+
+    fetchPermissionHistory();
   }, []);
+
+  const getStatusLabel = (status) => {
+    if (status === 'pending') {
+      return <span className="status-pending">Pending</span>;
+    } else if (status === 'rejected') {
+      return <span className="status-rejected">Rejected</span>;
+    } else {
+      return <span className="status-approved">Approved</span>;
+    }
+  };
 
   return (
     <div className="content">
       <h2>Permission History</h2>
+      <br/>
+      <br/>
       {permissions.length > 0 ? (
-        <ul>
+        <Box className="leave-container">
           {permissions.map((permission) => (
-            <li key={permission.id}>
-              <p>Start Date: {permission.startDate}</p>
-              <p>Start Time: {permission.startTime}</p>
-              <p>End Date: {permission.endDate}</p>
-              <p>End Time: {permission.endTime}</p>
-              <p>Reason: {permission.reason}</p>
-            </li>
+            <div className="leave-card" key={permission.id}>
+              <div className="leave-card-header">
+                <p >{permission.req_type}</p >
+              </div>
+              <Box>
+                <p size="small">{getStatusLabel(permission.status)}</p>
+                <p>Start Date: {permission.date_from.split('T')[0]}</p>
+                <p>Start Time: {permission.time_from}</p>
+                <p>End Date: {permission.date_to.split('T')[0]}</p>
+                <p>End Time: {permission.time_to}</p>
+                <p>Reason: {permission.reason}</p>
+                <p>Attachment: {permission.attachment}</p>
+              </Box>
+              <br/>
+            </div>
           ))}
-        </ul>
+        </Box>
       ) : (
         <p>No permissions found.</p>
       )}
@@ -268,91 +445,120 @@ function PermissionHistory() {
   );
 }
 
+
 function NewLeave() {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [leaveType, setLeaveType] = useState('');
-  const [reason, setReason] = useState('');
+  const [leaveType, setLeaveType] = useState("");
+  const [reason, setReason] = useState("");
   const [attachment, setAttachment] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  const handleAttachmentChange = (e) => {
-    const file = e.target.files[0];
-    setAttachment(file);
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+  
     const leave = {
-      startDate,
-      endDate,
-      leaveType,
+      req_datetime: new Date().toISOString(),
+      req_type: leaveType.toLowerCase(),
+      date_from: startDate.toISOString().split("T")[0],
+      date_to: endDate.toISOString().split("T")[0],
+      time_from: "00:00:00",
+      time_to: "00:00:00",
+      user_id: user.user_id,
       reason,
-      attachment,
+      attachment: attachment ? attachment.name : "",
     };
-    // Perform submission logic here (e.g., API call, data storage)
-    console.log('New Leave:', leave);
-    setStartDate(new Date());
-    setEndDate(new Date());
-    setLeaveType('');
-    setReason('');
-    setAttachment(null);
+  
+    try {
+      const response = await axios.post("http://localhost:5000/requests", leave);
+      console.log("Leave submitted:", response);
+  
+      setStartDate(new Date());
+      setEndDate(new Date());
+      setLeaveType("");
+      setReason("");
+      setAttachment(null);
+      setSuccess(true);
+      setError(null);
+  
+      navigate("/leavehistory");
+    } catch (error) {
+      console.error("Error submitting leave:", error.response.data);
+      setError(error.response.data);
+      setSuccess(false);
+    }
   };
-
+  
   return (
     <div className="content">
       <h2>New Leave</h2>
+      {success && <p>Leave submitted successfully.</p>}
+      {error && <p>Error submitting leave: {error}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="startDate">Start Date:</label>
           <br />
           <DatePicker
-  selected={startDate}
-  onChange={setStartDate}
-  dateFormat="yyyy-MM-dd"
-  calendarIcon={null}
-  clearIcon={null}
-  required
-/>
-
+            selected={startDate}
+            onChange={setStartDate}
+            dateFormat="yyyy-MM-dd"
+            calendarIcon={null}
+            clearIcon={null}
+            required
+          />
         </div>
         <div>
           <label htmlFor="endDate">End Date:</label>
           <br />
           <DatePicker
-  selected={endDate}
-  onChange={setEndDate}
-  dateFormat="yyyy-MM-dd"
-  calendarIcon={null}
-  clearIcon={null}
-  required
-/>
-
+            selected={endDate}
+            onChange={setEndDate}
+            dateFormat="yyyy-MM-dd"
+            calendarIcon={null}
+            clearIcon={null}
+            required
+          />
         </div>
         <div>
           <label htmlFor="leaveType">Leave Type:</label>
           <br />
-          <select id="leaveType" name="leaveType" value={leaveType} onChange={(e) => setLeaveType(e.target.value)}>
+          <select
+            id="leaveType"
+            name="leaveType"
+            value={leaveType}
+            onChange={(e) => setLeaveType(e.target.value)}
+            required
+          >
             <option value="">Select Leave Type</option>
-            <option value="Sick Leave">Sick Leave</option>
             <option value="Annual Leave">Annual Leave</option>
-            <option value="Unpaid Leave">Unpaid Leave</option>
+            <option value="Sick Leave">Sick Leave</option>
+            <option value="Other Leave">Other Leave</option>
           </select>
         </div>
         <div>
           <label htmlFor="reason">Reason:</label>
           <br />
-          <input
+          <textarea
             type="text"
             id="reason"
             name="reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
+            style={{width: '100%', height: '60px', padding: '10px'}}
+            required
           />
         </div>
         <div>
           <label htmlFor="attachment">Attachment:</label>
           <br />
-          <input type="file" id="attachment" name="attachment" onChange={handleAttachmentChange} />
+          <input
+            type="file"
+            id="attachment"
+            name="attachment"
+            onChange={(e) => setAttachment(e.target.files[0])}
+          />
         </div>
         <button type="submit">Submit</button>
       </form>
@@ -360,38 +566,76 @@ function NewLeave() {
   );
 }
 
+
+
+
 function LeaveHistory() {
   const [leaves, setLeaves] = useState([]);
 
-  // Simulating data fetching with useEffect
   useEffect(() => {
-    // Perform API call or data retrieval here
-    // Update `leaves` state with the fetched data
-    const fetchedLeaves = []; // Replace with actual data fetching logic
-    setLeaves(fetchedLeaves);
+    const fetchLeaveHistory = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`);
+        if (response.data && response.data.length > 0) {
+          // Exclude leaves of type "Permission"
+          const filteredLeaves = response.data.filter(leave => leave.req_type.toLowerCase() !== "permission");
+          setLeaves(filteredLeaves);
+        } else {
+          setLeaves([]);
+        }
+      } catch (error) {
+        console.error('Error retrieving leave history:', error.message);
+        setLeaves([]);
+      }
+    };
+  
+    fetchLeaveHistory();
   }, []);
+
+  const getStatusLabel = (status) => {
+    if (status === 'pending') {
+      return <span className="status-pending">Pending</span>;
+    } else if (status === 'rejected') {
+      return <span className="status-rejected">Rejected</span>;
+    } else {
+      return <span className="status-approved">Approved</span>;
+    }
+  };
 
   return (
     <div className="content">
       <h2>Leave History</h2>
+      <br/>
+      <br/>
       {leaves.length > 0 ? (
-        <ul>
+        <Box className="leave-container">
           {leaves.map((leave) => (
-            <li key={leave.id}>
-              <p>Start Date: {leave.startDate}</p>
-              <p>End Date: {leave.endDate}</p>
-              <p>Leave Type: {leave.leaveType}</p>
-              <p>Reason: {leave.reason}</p>
-              <p>Attachment: {leave.attachment}</p>
-            </li>
+            <div className="leave-card" key={leave.id}>
+              
+              
+              <div className="leave-card-header">
+                <p >{leave.req_type}</p >
+              </div>
+              <Box>
+                <p size="small">{getStatusLabel(leave.status)}</p>
+                <p>Start Date: {leave.date_from.split('T')[0]}</p>
+                <p>End Date: {leave.date_to.split('T')[0]}</p>
+                <p>Reason: {leave.reason}</p>
+                <p>Attachment: {leave.attachment}</p>
+                </Box>
+              <br/>
+            </div>
           ))}
-        </ul>
+        </Box>
       ) : (
         <p>No leaves found.</p>
       )}
     </div>
   );
 }
+
+
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -451,6 +695,8 @@ function App() {
               // Replace `user === null` with actual authentication check
               caseSensitive
             />
+            <Route path="/signin" element={<SignIn />} caseSensitive />
+          <Route path="/signup" element={<SignUp />} caseSensitive />
             <Route path="/newpermission" element={<NewPermission />} caseSensitive />
             <Route path="/permissionhistory" element={<PermissionHistory />} caseSensitive />
             <Route path="/newleave" element={<NewLeave />} caseSensitive />
