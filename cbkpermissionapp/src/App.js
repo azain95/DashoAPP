@@ -1,13 +1,18 @@
 // App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink,Navigate  } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink,Navigate , Switch } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
-
+import Cookies from 'js-cookie';
 import Box from '@mui/material/Box';
+import { Button, Container } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, TextField, Typography } from '@material-ui/core';
+
 
 import axios from 'axios';
 
 import 'react-datepicker/dist/react-datepicker.css';
+import { TextareaAutosize } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 
 import { TimePicker } from 'react-ios-time-picker';
@@ -51,10 +56,8 @@ function Navbar({ darkMode, toggleDarkMode }) {
     </nav>
   );
 }
-import { useNavigate } from 'react-router-dom';
-import { TextareaAutosize } from '@mui/material';
 
-function SignIn() {
+function SignIn({ handleSignIn: parentHandleSignIn }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -64,72 +67,49 @@ function SignIn() {
 
     try {
       const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
-
-      // Handle successful sign-in
-      if (response.status === 200 && response.data) {
+      if (response.data.token) {
+        Cookies.set('token', response.data.token);
+        console.log('Response:', response);
         setUsername('');
         setPassword('');
-        alert(`Welcome ${response.data.name}!`);
-
-          // Store user data in localStorage
-          localStorage.setItem('user', JSON.stringify(response.data));
-          console.log('Stored user:', JSON.parse(localStorage.getItem('user')));
-          console.log('Response data:', response.data);
-        // Redirect to the desired route after successful sign-in
-        navigate("/newpermission");
+        alert(`Welcome ${response.data.user.name}!`);
+        Cookies.set('user', JSON.stringify(response.data.user));
+        console.log('Stored user:', JSON.parse(Cookies.get('user')));
+        console.log('Redirecting to /newpermission');
+        navigate('/');
       }
     } catch (error) {
       // Handle sign-in error
       if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         alert(error.response.data.error);
       } else if (error.request) {
-        // The request was made but no response was received
         alert('No response from server');
       } else {
-        // Something happened in setting up the request that triggered an Error
         alert('Error in setting up the request');
       }
     }
   };
 
   return (
-    <div className="credentials">
+    <Container component={Paper} className="credentials">
       <h2 className="form-title">Sign In</h2>
       <form onSubmit={handleSignIn}>
-        <div>
-          <label htmlFor="username">Username:</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="password">Password:</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <button type="submit">Sign In</button>
+        <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth />
+        <TextField type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} fullWidth />
+        <Button type="submit" variant="contained" color="primary">Sign In</Button>
       </form>
       <p>
         <Link to="/signup">Sign Up</Link>
       </p>
-    </div>
+    </Container>
   );
 }
 
 
 
+
 function SignUp({ handleSignUp }) {
+  const navigate = useNavigate();
   const [user_id, setUserId] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -165,15 +145,16 @@ function SignUp({ handleSignUp }) {
 
       // Handle successful sign-up
       if (response.status === 200) {
-        // Reset form fields on successful sign-up
-        setUserId('');
-        setName('');
-        setEmail('');
-        setMobile('');
-        setPassword('');
-        setError('');
+        // // Reset form fields on successful sign-up
+        // setUserId('');
+        // setName('');
+        // setEmail('');
+        // setMobile('');
+        // setPassword('');
+        // setError('');
         // Redirect to the Sign In route after successful sign-up
-        return <Navigate to="/signin" />;
+        navigate("/signin");
+
       }
     } catch (error) {
       if (error.response && error.response.data) {
@@ -286,7 +267,7 @@ function NewPermission() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
+    const userData = Cookies.get('user');
     if (userData) {
       setUser(JSON.parse(userData));
     }
@@ -294,8 +275,17 @@ function NewPermission() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const user = JSON.parse(localStorage.getItem('user'));
-
+    const user = JSON.parse(Cookies.get('user'));
+  
+    // Check that the user object exists before attempting to access its properties
+    if (!user) {
+      console.error('User object is undefined');
+      return;
+    }
+  
+    // Log the user object to the console
+    console.log('User object:', user);
+  
     const permission = {
       req_datetime: new Date().toISOString(),
       req_type: 'permission',
@@ -303,13 +293,20 @@ function NewPermission() {
       date_to: endDate.toISOString(),
       time_from: startTime,
       time_to: endTime,
-      user_id: user.user_id,
+      user_id: user.user_id, // Now safe to access, as we've checked that user is defined
       reason: reason,
       status: 'pending',
     };
-
+  
+    // Retrieve the token from cookies
+    const token = Cookies.get('token');
+  
     try {
-      const response = await axios.post('http://localhost:5000/requests', permission);
+      const response = await axios.post('http://localhost:5000/requests', permission, {
+        headers: {
+          Authorization: `Bearer ${token}` // Including the token in the Authorization header
+        }
+      });
       console.log(response.data);
       setStartDate(new Date());
       setStartTime('12:00');
@@ -320,76 +317,66 @@ function NewPermission() {
       console.error(error);
     }
   };
-
   return (
-    <div className="content">
+    <Container component={Paper} className="content">
       <h2>New Permission</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="startDate">Start Date:</label>
-          <br/>
-          <DatePicker
-            selected={startDate}
-            onChange={setStartDate}
-            dateFormat="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="startTime">Start Time:</label>
-          <TimePicker value={startTime} onChange={setStartTime} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="endDate">End Date:</label>
-          <br/>
-          <DatePicker
-            selected={endDate}
-            onChange={setEndDate}
-            dateFormat="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="endTime">End Time:</label>
-          <TimePicker value={endTime} onChange={setEndTime} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="reason">Reason:</label>
-          <br/>
-          <textarea
-            id="reason"
-            name="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            style={{width: '100%', height: '60px', padding: '10px'}}
-            required
-          />
-        </div>
-        <button type="submit">Submit</button>
+        <FormControl fullWidth>
+          <InputLabel htmlFor="startDate">Start Date:</InputLabel>
+          <DatePicker selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
+        </FormControl>
+        <TextField label="Start Time" value={startTime} onChange={(e) => setStartTime(e.target.value)} fullWidth required />
+        <FormControl fullWidth>
+          <InputLabel htmlFor="endDate">End Date:</InputLabel>
+          <DatePicker selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
+        </FormControl>
+        <TextField label="End Time" value={endTime} onChange={(e) => setEndTime(e.target.value)} fullWidth required />
+        <TextField label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth required multiline rows={4} />
+        <Button type="submit" variant="contained" color="primary">Submit</Button>
       </form>
-    </div>
+    </Container>
   );
 }
 
 
 
 
+
 function PermissionHistory() {
   const [permissions, setPermissions] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [filters, setFilters] = useState({
+    type: '',
+    status: '',
+    startDate: null,
+    startTime: '',
+    endDate: null,
+    endTime: '',
+    reason: '',
+    attachment: ''
+  });
 
   useEffect(() => {
     const fetchPermissionHistory = async () => {
       try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`);
+        const user = JSON.parse(Cookies.get('user'));
+        if (!user) {
+          console.error('User object is undefined');
+          return;
+        }
+
+        const token = Cookies.get('token');
+
+        const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
         if (response.data && response.data.length > 0) {
-          // Filter to only include permissions
           const permissionsData = response.data.filter(req => req.req_type.toLowerCase() === 'permission');
+          permissionsData.sort((a, b) => new Date(b.req_datetime) - new Date(a.req_datetime));
           setPermissions(permissionsData);
         } else {
           setPermissions([]);
@@ -412,41 +399,101 @@ function PermissionHistory() {
       return <span className="status-approved">Approved</span>;
     }
   };
+  const handleFilterChange = (field, value) => {
+    setFilters({
+      ...filters,
+      [field]: value
+    });
+  };
+
+  const filteredPermissions = permissions.filter((permission) => {
+    if (statusFilter && permission.status !== statusFilter) return false;
+    if (dateFilter && !permission.req_datetime.startsWith(dateFilter)) return false;
+    return true;
+  });
 
   return (
     <div className="content">
-      <h2>Permission History</h2>
-      <br/>
-      <br/>
-      {permissions.length > 0 ? (
-        <Box className="leave-container">
-          {permissions.map((permission) => (
-            <div className="leave-card" key={permission.id}>
-              <div className="leave-card-header">
-                <p >{permission.req_type}</p >
-              </div>
-              <Box>
-                <p size="small">{getStatusLabel(permission.status)}</p>
-                <p>Start Date: {permission.date_from.split('T')[0]}</p>
-                <p>Start Time: {permission.time_from}</p>
-                <p>End Date: {permission.date_to.split('T')[0]}</p>
-                <p>End Time: {permission.time_to}</p>
-                <p>Reason: {permission.reason}</p>
-                <p>Attachment: {permission.attachment}</p>
-              </Box>
-              <br/>
-            </div>
-          ))}
-        </Box>
-      ) : (
-        <p>No permissions found.</p>
-      )}
+      <Typography variant="h4" gutterBottom>Permission History</Typography>
+      <div className="filter-container">
+        <FormControl variant="outlined" style={{ marginRight: '20px' }}>
+          <InputLabel>Status</InputLabel>
+          <Select label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            
+          >
+            <MenuItem value=""><em>All</em></MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="rejected">Rejected</MenuItem>
+            <MenuItem value="approved">Approved</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="Date"
+          type="date"
+          variant="outlined"
+          onChange={(e) => setDateFilter(e.target.value)}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+      </div>
+      <Paper style={{ marginTop: '20px' }}>
+        <Table>
+        <TableHead>
+            <TableRow>
+              <TableCell><TextField label="Type" variant="outlined" size="small" onChange={(e) => handleFilterChange('type', e.target.value)} /></TableCell>
+              <TableCell>
+                <FormControl variant="outlined" size="small">
+                  <Select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                  >
+                    <MenuItem value=""><em>None</em></MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="approved">Approved</MenuItem>
+                    <MenuItem value="rejected">Rejected</MenuItem>
+                  </Select>
+                </FormControl>
+              </TableCell>
+              <TableCell><DatePicker label="Start Date" inputVariant="outlined" size="small" value={filters.startDate} onChange={(date) => handleFilterChange('startDate', date)} /></TableCell>
+              <TableCell><TextField label="Start Time" variant="outlined" size="small" onChange={(e) => handleFilterChange('startTime', e.target.value)} /></TableCell>
+              <TableCell><DatePicker label="End Date" inputVariant="outlined" size="small" value={filters.endDate} onChange={(date) => handleFilterChange('endDate', date)} /></TableCell>
+              <TableCell><TextField label="End Time" variant="outlined" size="small" onChange={(e) => handleFilterChange('endTime', e.target.value)} /></TableCell>
+              <TableCell><TextField label="Reason" variant="outlined" size="small" onChange={(e) => handleFilterChange('reason', e.target.value)} /></TableCell>
+              <TableCell><TextField label="Attachment" variant="outlined" size="small" onChange={(e) => handleFilterChange('attachment', e.target.value)} /></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredPermissions.length > 0 ? (
+              filteredPermissions.map((permission) => (
+                <TableRow key={permission.id}>
+                  <TableCell>{permission.req_type}</TableCell>
+                  <TableCell>{getStatusLabel(permission.status)}</TableCell>
+                  <TableCell>{permission.date_from.split('T')[0]}</TableCell>
+                  <TableCell>{permission.time_from}</TableCell>
+                  <TableCell>{permission.date_to.split('T')[0]}</TableCell>
+                  <TableCell>{permission.time_to}</TableCell>
+                  <TableCell>{permission.reason}</TableCell>
+                  <TableCell>{permission.attachment}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan="8">No permissions found.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
     </div>
   );
 }
 
 
 function NewLeave() {
+  const navigate = useNavigate();
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [leaveType, setLeaveType] = useState("");
@@ -454,10 +501,29 @@ function NewLeave() {
   const [attachment, setAttachment] = useState(null);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  
+  const userCookie = Cookies.get('user');
+  if (!userCookie) {
+    setError("User not authenticated");
+    return; // Exit the function if there's no user cookie
+  }
+
+  const token = Cookies.get('token'); // Retrieve the token from cookies
+  if (!token) {
+    setError("User token is missing");
+    return; // Exit the function if there's no token
+  }
+
+  const user = JSON.parse(userCookie);
+  if (!user || !user.user_id) {
+    setError("Invalid user data");
+    return; // Exit the function if the user object or user_id is missing
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
   
     const leave = {
       req_datetime: new Date().toISOString(),
@@ -472,7 +538,11 @@ function NewLeave() {
     };
   
     try {
-      const response = await axios.post("http://localhost:5000/requests", leave);
+      const response = await axios.post("http://localhost:5000/requests", leave, {
+        headers: {
+          Authorization: `Bearer ${token}` // Including the token in the Authorization header
+        }
+      });
       console.log("Leave submitted:", response);
   
       setStartDate(new Date());
@@ -568,15 +638,34 @@ function NewLeave() {
 
 
 
-
 function LeaveHistory() {
   const [leaves, setLeaves] = useState([]);
 
   useEffect(() => {
     const fetchLeaveHistory = async () => {
+      const userCookie = Cookies.get('user');
+      const token = Cookies.get('token'); // Retrieve the token from cookies
+
+      if (!userCookie || !token) {
+        console.error('User not authenticated');
+        setLeaves([]);
+        return; // Exit if there's no user cookie or token
+      }
+  
+      const user = JSON.parse(userCookie);
+      if (!user || !user.user_id) {
+        console.error('Invalid user data');
+        setLeaves([]);
+        return; // Exit if the user object or user_id is missing
+      }
+
       try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`);
+        const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}` // Including the token in the Authorization header
+          }
+        });
+
         if (response.data && response.data.length > 0) {
           // Exclude leaves of type "Permission"
           const filteredLeaves = response.data.filter(leave => leave.req_type.toLowerCase() !== "permission");
@@ -602,7 +691,6 @@ function LeaveHistory() {
       return <span className="status-approved">Approved</span>;
     }
   };
-
   return (
     <div className="content">
       <h2>Leave History</h2>
@@ -636,25 +724,68 @@ function LeaveHistory() {
 }
 
 
+function Home() {
+  // Retrieve user data from the cookie
+  const userCookie = Cookies.get('user');
+  const user = userCookie ? JSON.parse(userCookie) : null;
+
+  return (
+    <div className="content">
+      <h2>Welcome, {user ? user.name : 'Guest'}!</h2>
+      {user && (
+        <div>
+          <p>Name: {user.name}</p>
+          <p>Email: {user.email}</p>
+          <p>Mobile: {user.mobile}</p>
+        </div>
+      )}
+      {/* You can display some welcome message or other content here */}
+    </div>
+  );
+}
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(null);
 
-  const handleSignIn = (credentials) => {
-    // Perform sign-in logic here (e.g., API call, authentication)
-    console.log('Sign In:', credentials);
-    setUser(credentials);
+
+  const handleSignIn = async (username, password) => { // Updated parameters
+    try {
+      const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
+      if (response.data.token) {
+        Cookies.set('token', response.data.token);
+        Cookies.set('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        navigate('/'); // Redirect to home page
+      }
+    } catch (error) {
+      // Handle sign-in error
+      console.error('Error signing in:', error);
+    }
   };
 
-  const handleSignUp = (credentials) => {
-    // Perform sign-up logic here (e.g., API call, user creation)
-    console.log('Sign Up:', credentials);
-    setUser(credentials);
+  const handleSignUp = async (credentials) => {
+    try {
+      const response = await axios.post('http://localhost:5000/signup', credentials);
+      if (response.data.token) {
+        Cookies.set('token', response.data.token);
+        Cookies.set('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        navigate('/'); // Redirect to home page
+      }
+    } catch (error) {
+      // Handle sign-up error
+      console.error('Error signing up:', error);
+    }
   };
+  
 
   const handleSignOut = () => {
+    // Remove user data and token from cookies
+    Cookies.remove('user');
+    Cookies.remove('token');
     setUser(null);
+    navigate('/'); // Redirect to home page or login page
   };
 
   const toggleDarkMode = () => {
@@ -663,8 +794,7 @@ function App() {
 
   return (
     <Router>
-    <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
-
+      <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
           <h1>Leave and Permission Management</h1>
@@ -672,35 +802,13 @@ function App() {
         <div className="container">
           <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
           <Routes>
-            <Route
-              path="/signin"
-              element={<SignIn handleSignIn={handleSignIn} />}
-              // Render SignIn component only when user is not authenticated
-              // Replace `user === null` with actual authentication check
-              // For example: `user === null ? <SignIn /> : <Navigate to="/newpermission" />`
-              // <Navigate to="/newpermission" /> redirects to the NewPermission component
-              // when the user is already signed in
-              // <Navigate to="/" replace /> can be used to replace the current URL
-              // with the specified URL in the browser history
-              // You might want to adjust this behavior according to your application's needs
-              // For example: <Navigate to="/newpermission" replace={user !== null} />
-              // Redirects to NewPermission only if the user is authenticated
-              // Otherwise, stays on the SignIn page
-              caseSensitive
-            />
-            <Route
-              path="/signup"
-              element={<SignUp handleSignUp={handleSignUp} />}
-              // Render SignUp component only when user is not authenticated
-              // Replace `user === null` with actual authentication check
-              caseSensitive
-            />
-            <Route path="/signin" element={<SignIn />} caseSensitive />
-          <Route path="/signup" element={<SignUp />} caseSensitive />
+            <Route path="/signin" element={<SignIn handleSignIn={handleSignIn} />} caseSensitive />
+            <Route path="/signup" element={<SignUp handleSignUp={handleSignUp} />} caseSensitive />
             <Route path="/newpermission" element={<NewPermission />} caseSensitive />
             <Route path="/permissionhistory" element={<PermissionHistory />} caseSensitive />
             <Route path="/newleave" element={<NewLeave />} caseSensitive />
             <Route path="/leavehistory" element={<LeaveHistory />} caseSensitive />
+            <Route path="/" element={<Home user={user} />} caseSensitive /> {/* Passing user prop */}
           </Routes>
         </div>
         <footer className="App-footer">
