@@ -1,106 +1,164 @@
 // App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink,Navigate , Switch } from 'react-router-dom';
-import DatePicker from 'react-datepicker';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, Navigate, Switch } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import Box from '@mui/material/Box';
-import { Button, Container } from '@mui/material';
-import { Table, TableBody, TableCell, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, TextField, Typography } from '@material-ui/core';
-
-
+import Container from '@mui/material/Container';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, TextField, Typography } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Drawer, List, ListItem, ListItemText, useMediaQuery, useTheme, Grid } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { Button, Link as MuiLink } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
-
-import 'react-datepicker/dist/react-datepicker.css';
 import { TextareaAutosize } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { TimePicker } from '@mui/x-date-pickers';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format } from 'date-fns';
+import { Snackbar } from '@mui/material';
+import Alert from '@mui/material/Alert';
+import { Link as RouterLink } from 'react-router-dom';
+import CssBaseline from '@mui/material/CssBaseline';
 
 
-import { TimePicker } from 'react-ios-time-picker';
+// import { TimePicker } from 'react-ios-time-picker';
 
 
 
 import logo from './logocbk.png';
 import './App.css';
 
-function Navbar({ darkMode, toggleDarkMode }) {
+
+
+function Navbar({ darkMode, toggleDarkMode , handleSignOut }) {
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const handleDrawerToggle = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
+  const NavList = () => (
+    <List>
+         <ListItem button component={NavLink} to="/" activeClassName="active">
+        <ListItemText primary="Home" />
+      </ListItem>
+      <ListItem button component={NavLink} to="/newpermission" activeClassName="active">
+        <ListItemText primary="New Permission" />
+      </ListItem>
+      <ListItem button component={NavLink} to="/permissionhistory" activeClassName="active">
+        <ListItemText primary="Permissions History" />
+      </ListItem>
+      <ListItem button component={NavLink} to="/newleave" activeClassName="active">
+        <ListItemText primary="New Leave" />
+      </ListItem>
+      <ListItem button component={NavLink} to="/leavehistory" activeClassName="active">
+        <ListItemText primary="Leave History" />
+      </ListItem>
+      <ListItem button onClick={handleSignOut} component={NavLink} to="/signin" activeClassName="active">
+        <ListItemText primary="Logout" />
+      </ListItem>
+      <ListItem button onClick={toggleDarkMode}>
+        <ListItemText primary={darkMode ? 'Light Mode' : 'Dark Mode'} />
+      </ListItem>
+      
+    </List>
+  );
+
   return (
-    <nav className={`navbar ${darkMode ? 'dark-mode' : ''}`}>
-      <ul className="nav-menu">
-        <li>
-          <NavLink to="/newpermission" activeClassName="active">
-            New Permission
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/permissionhistory" activeClassName="active">
-            Permission History
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/newleave" activeClassName="active">
-            New Leave
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/leavehistory" activeClassName="active">
-            Leave History
-          </NavLink>
-        </li>
-        <li>
-          <Link to="/signin">Logout</Link>
-        </li>
-      </ul>
-      <button className="dark-mode-button" onClick={toggleDarkMode}>
-        {darkMode ? 'Light Mode' : 'Dark Mode'}
-      </button>
-    </nav>
+    <AppBar position="static" className="navbar">
+      <Toolbar className="navbar">
+        {isMobile ? (
+          <>
+            <IconButton edge="start" color="inherit" aria-label="menu" onClick={handleDrawerToggle}>
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" style={{ flexGrow: 1 }}>
+              Leave and Permission Management
+            </Typography>
+            <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerToggle}>
+              <NavList />
+            </Drawer>
+          </>
+        ) : (
+          <>
+  
+            <Button color="inherit" component={NavLink} to="/" activeClassName="active">Home</Button>
+            <Button color="inherit" component={NavLink} to="/newpermission" activeClassName="active">New Permission</Button>
+  
+         <Button color="inherit" component={NavLink} to="/permissionhistory" activeClassName="active">Permissions History</Button>
+         <Button color="inherit" component={NavLink} to="/newleave" activeClassName="active">New Leave</Button>
+         <Button color="inherit" component={NavLink} to="/leavehistory" activeClassName="active">Leave History</Button>
+         <Button color="inherit" onClick={handleSignOut} component={NavLink} to="/signin" activeClassName="active">Logout  </Button>
+         
+            <Button color="inherit" onClick={toggleDarkMode}>{darkMode ? 'Light Mode' : 'Dark Mode'}</Button>
+          </>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 }
 
-function SignIn({ handleSignIn: parentHandleSignIn }) {
+
+function SignIn(props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSignIn = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
-      if (response.data.token) {
-        Cookies.set('token', response.data.token);
-        console.log('Response:', response);
-        setUsername('');
-        setPassword('');
-        alert(`Welcome ${response.data.user.name}!`);
-        Cookies.set('user', JSON.stringify(response.data.user));
-        console.log('Stored user:', JSON.parse(Cookies.get('user')));
-        console.log('Redirecting to /newpermission');
-        navigate('/');
-      }
+      await props.handleSignIn(username, password); // Call the handleSignIn method passed as props
+      navigate('/'); // Redirect to the home page
     } catch (error) {
       // Handle sign-in error
-      if (error.response) {
-        alert(error.response.data.error);
-      } else if (error.request) {
-        alert('No response from server');
-      } else {
-        alert('Error in setting up the request');
-      }
+      alert(error.message);
     }
   };
 
   return (
-    <Container component={Paper} className="credentials">
-      <h2 className="form-title">Sign In</h2>
-      <form onSubmit={handleSignIn}>
-        <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth />
-        <TextField type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} fullWidth />
-        <Button type="submit" variant="contained" color="primary">Sign In</Button>
-      </form>
-      <p>
-        <Link to="/signup">Sign Up</Link>
-      </p>
+    <Container component="main" maxWidth="xs">
+      <Paper elevation={3} style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Typography variant="h5">
+          Sign In
+        </Typography>
+        <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: 15 }}>
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            style={{ marginTop: 15 }}
+          >
+            Sign In
+          </Button>
+          <Typography variant="body2" style={{ textAlign: 'center', marginTop: 10 }}>
+            Don't have an account? <MuiLink component={RouterLink} to="/signup" variant="body2">Sign Up</MuiLink>
+          </Typography>
+        </form>
+      </Paper>
     </Container>
   );
 }
@@ -108,7 +166,7 @@ function SignIn({ handleSignIn: parentHandleSignIn }) {
 
 
 
-function SignUp({ handleSignUp }) {
+function SignUp() {
   const navigate = useNavigate();
   const [user_id, setUserId] = useState('');
   const [name, setName] = useState('');
@@ -134,7 +192,7 @@ function SignUp({ handleSignUp }) {
     // Perform sign-up logic
     try {
       const credentials = {
-        user_id, // sending the user_id to the server
+        user_id,
         name,
         email,
         mobile,
@@ -143,18 +201,8 @@ function SignUp({ handleSignUp }) {
 
       const response = await axios.post('http://localhost:5000/signup', credentials);
 
-      // Handle successful sign-up
       if (response.status === 200) {
-        // // Reset form fields on successful sign-up
-        // setUserId('');
-        // setName('');
-        // setEmail('');
-        // setMobile('');
-        // setPassword('');
-        // setError('');
-        // Redirect to the Sign In route after successful sign-up
-        navigate("/signin");
-
+        navigate('/signin');
       }
     } catch (error) {
       if (error.response && error.response.data) {
@@ -164,6 +212,7 @@ function SignUp({ handleSignUp }) {
       }
     }
   };
+
   // Email validation function
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -177,94 +226,91 @@ function SignUp({ handleSignUp }) {
   };
 
   return (
-    <div className="credentials">
-      <h2 className="form-title">Sign Up</h2>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
-      <div>
-          <label htmlFor="user_id">User ID:</label>
-          <input
-            type="text"
-            id="user_id"
-            name="user_id"
+    <Container component="main" maxWidth="xs">
+      <Paper elevation={3} style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Typography variant="h5">
+          Sign Up
+        </Typography>
+        {error && <p className="error">{error}</p>}
+        <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: 15 }}>
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="User ID"
             value={user_id}
             onChange={(e) => setUserId(e.target.value)}
-            required
           />
-        </div>
-        <div>
-          <label htmlFor="name">Name:</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
           />
-        </div>
-        <div>
-          <label htmlFor="mobile">Mobile Number:</label>
-          <input
-            type="text"
-            id="mobile"
-            name="mobile"
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Mobile Number"
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
-            required
           />
-        </div>
-        
-        <div>
-          <label htmlFor="email">Email:</label>
-          <input
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Email"
             type="email"
-            id="email"
-            name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
-        </div>
-        
-        <div>
-          <label htmlFor="password">Password:</label>
-          <input
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Password"
             type="password"
-            id="password"
-            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
           />
-        </div>
-        <button type="submit">Sign Up</button>
-      </form>
-      <p>
-        <Link to="/signin">Sign In</Link>
-      </p>
-    </div>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            style={{ marginTop: 15 }}
+          >
+            Sign Up
+          </Button>
+          <Typography variant="body2" style={{ textAlign: 'center', marginTop: 10 }}>
+            Already have an account? <MuiLink component={RouterLink} to="/signin" variant="body2">Sign In</MuiLink>
+          </Typography>
+        </form>
+      </Paper>
+    </Container>
   );
 }
 
 
-function CustomInput({ value, onClick }) {
-  return (
-    <button className="custom-input" onClick={onClick}>
-      {value}
-    </button>
-  )
-}
 
 
 
 function NewPermission() {
   const [startDate, setStartDate] = useState(new Date());
-  const [startTime, setStartTime] = useState('12:00');
+  const [startTime, setStartTime] = useState(new Date()); // Initialize with a Date object
   const [endDate, setEndDate] = useState(new Date());
-  const [endTime, setEndTime] = useState('12:00');
+  const [endTime, setEndTime] = useState(new Date()); // Initialize with a Date object
   const [reason, setReason] = useState('');
   const [user, setUser] = useState(null);
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+
 
   useEffect(() => {
     const userData = Cookies.get('user');
@@ -276,6 +322,20 @@ function NewPermission() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const user = JSON.parse(Cookies.get('user'));
+
+        // Format the time values
+        const formattedStartTime = format(startTime, 'HH:mm');
+        const formattedEndTime = format(endTime, 'HH:mm');
+
+            // Check if time is selected
+    if (formattedStartTime === 'Invalid Date' || formattedEndTime === 'Invalid Date') {
+      setNotification({
+        open: true,
+        message: 'Please select a valid start and end time.',
+        severity: 'error',
+      });
+      return;
+    }
   
     // Check that the user object exists before attempting to access its properties
     if (!user) {
@@ -291,8 +351,8 @@ function NewPermission() {
       req_type: 'permission',
       date_from: startDate.toISOString(),
       date_to: endDate.toISOString(),
-      time_from: startTime,
-      time_to: endTime,
+      time_from: formattedStartTime,
+      time_to: formattedEndTime,
       user_id: user.user_id, // Now safe to access, as we've checked that user is defined
       reason: reason,
       status: 'pending',
@@ -307,37 +367,73 @@ function NewPermission() {
           Authorization: `Bearer ${token}` // Including the token in the Authorization header
         }
       });
-      console.log(response.data);
+      // Clear the form fields
       setStartDate(new Date());
-      setStartTime('12:00');
+      setStartTime(new Date());
       setEndDate(new Date());
-      setEndTime('12:00');
+      setEndTime(new Date());
       setReason('');
+
+      setNotification({
+        open: true,
+        message: 'Request submitted successfully!',
+        severity: 'success',
+      });
     } catch (error) {
       console.error(error);
+      setNotification({
+        open: true,
+        message: 'Error submitting request. Please try again.',
+        severity: 'error',
+      });
+      // Clear the form fields
+setStartDate(new Date());
+setStartTime('12:00');
+setEndDate(new Date());
+setEndTime('12:00');
+setReason('');
     }
   };
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
   return (
-    <Container component={Paper} className="content">
+    <Container component={Paper} style={{ padding: 20 }}>
       <h2>New Permission</h2>
       <form onSubmit={handleSubmit}>
-        <FormControl fullWidth>
-          <InputLabel htmlFor="startDate">Start Date:</InputLabel>
-          <DatePicker selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
-        </FormControl>
-        <TextField label="Start Time" value={startTime} onChange={(e) => setStartTime(e.target.value)} fullWidth required />
-        <FormControl fullWidth>
-          <InputLabel htmlFor="endDate">End Date:</InputLabel>
-          <DatePicker selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
-        </FormControl>
-        <TextField label="End Time" value={endTime} onChange={(e) => setEndTime(e.target.value)} fullWidth required />
-        <TextField label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth required multiline rows={4} />
-        <Button type="submit" variant="contained" color="primary">Submit</Button>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <InputLabel htmlFor="startDate">Start Date:</InputLabel>
+          <FormControl fullWidth style={{ marginBottom: 15 }}>
+            <DatePicker selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
+          </FormControl>
+          <TimePicker
+            label="Start Time"
+            value={startTime}
+            onChange={setStartTime}
+            renderInput={(params) => <TextField {...params} fullWidth required />}
+          />
+            <InputLabel htmlFor="endDate">End Date:</InputLabel>
+          <FormControl fullWidth style={{ marginBottom: 15, marginTop: 15 }}>
+            <DatePicker selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
+          </FormControl>
+          <TimePicker
+            label="End Time"
+            value={endTime}
+            onChange={setEndTime}
+            renderInput={(params) => <TextField {...params} fullWidth required />}
+          />
+          <TextField label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth required multiline rows={4} style={{ marginTop: 15 }} />
+          <Button type="submit" variant="contained" color="primary" style={{ marginTop: 20 }}>Submit</Button>
+        </LocalizationProvider>
       </form>
+      <Snackbar open={notification.open} autoHideDuration={6000} onClose={handleCloseNotification}>
+        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
-
 
 
 
@@ -346,6 +442,13 @@ function PermissionHistory() {
   const [permissions, setPermissions] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const theme = useTheme();
+
+  const customStyles = {
+    backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#fff',
+    // Other custom styles...
+  };
+
   const [filters, setFilters] = useState({
     type: '',
     status: '',
@@ -356,6 +459,9 @@ function PermissionHistory() {
     reason: '',
     attachment: ''
   });
+
+
+  
 
   useEffect(() => {
     const fetchPermissionHistory = async () => {
@@ -399,98 +505,81 @@ function PermissionHistory() {
       return <span className="status-approved">Approved</span>;
     }
   };
-  const handleFilterChange = (field, value) => {
-    setFilters({
-      ...filters,
-      [field]: value
-    });
+
+  const handleSearchChange = (e, field) => {
+    setFilters({ ...filters, [field]: e.target.value });
   };
 
-  const filteredPermissions = permissions.filter((permission) => {
-    if (statusFilter && permission.status !== statusFilter) return false;
-    if (dateFilter && !permission.req_datetime.startsWith(dateFilter)) return false;
-    return true;
-  });
+  // Helper function to format date for display
+  const formatDate = (dateString) => {
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+  };
 
-  return (
-    <div className="content">
-      <Typography variant="h4" gutterBottom>Permission History</Typography>
-      <div className="filter-container">
-        <FormControl variant="outlined" style={{ marginRight: '20px' }}>
-          <InputLabel>Status</InputLabel>
-          <Select label="Status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            
-          >
-            <MenuItem value=""><em>All</em></MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="rejected">Rejected</MenuItem>
-            <MenuItem value="approved">Approved</MenuItem>
-          </Select>
-        </FormControl>
-        <TextField
-          label="Date"
-          type="date"
-          variant="outlined"
-          onChange={(e) => setDateFilter(e.target.value)}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </div>
-      <Paper style={{ marginTop: '20px' }}>
-        <Table>
-        <TableHead>
-            <TableRow>
-              <TableCell><TextField label="Type" variant="outlined" size="small" onChange={(e) => handleFilterChange('type', e.target.value)} /></TableCell>
-              <TableCell>
-                <FormControl variant="outlined" size="small">
-                  <Select
-                    value={filters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                  >
-                    <MenuItem value=""><em>None</em></MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="approved">Approved</MenuItem>
-                    <MenuItem value="rejected">Rejected</MenuItem>
-                  </Select>
-                </FormControl>
-              </TableCell>
-              <TableCell><DatePicker label="Start Date" inputVariant="outlined" size="small" value={filters.startDate} onChange={(date) => handleFilterChange('startDate', date)} /></TableCell>
-              <TableCell><TextField label="Start Time" variant="outlined" size="small" onChange={(e) => handleFilterChange('startTime', e.target.value)} /></TableCell>
-              <TableCell><DatePicker label="End Date" inputVariant="outlined" size="small" value={filters.endDate} onChange={(date) => handleFilterChange('endDate', date)} /></TableCell>
-              <TableCell><TextField label="End Time" variant="outlined" size="small" onChange={(e) => handleFilterChange('endTime', e.target.value)} /></TableCell>
-              <TableCell><TextField label="Reason" variant="outlined" size="small" onChange={(e) => handleFilterChange('reason', e.target.value)} /></TableCell>
-              <TableCell><TextField label="Attachment" variant="outlined" size="small" onChange={(e) => handleFilterChange('attachment', e.target.value)} /></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredPermissions.length > 0 ? (
-              filteredPermissions.map((permission) => (
-                <TableRow key={permission.id}>
-                  <TableCell>{permission.req_type}</TableCell>
-                  <TableCell>{getStatusLabel(permission.status)}</TableCell>
-                  <TableCell>{permission.date_from.split('T')[0]}</TableCell>
-                  <TableCell>{permission.time_from}</TableCell>
-                  <TableCell>{permission.date_to.split('T')[0]}</TableCell>
-                  <TableCell>{permission.time_to}</TableCell>
-                  <TableCell>{permission.reason}</TableCell>
-                  <TableCell>{permission.attachment}</TableCell>
-                </TableRow>
-              ))
-            ) : (
+    const filteredPermissions = permissions.filter((permission) => {
+      if (filters.type && !permission.req_type.includes(filters.type)) return false;
+      if (filters.status && permission.status !== filters.status) return false;
+      if (filters.startDate && formatDate(permission.date_from) !== filters.startDate) return false;
+      if (filters.startTime && !permission.time_from.includes(filters.startTime)) return false;
+      if (filters.endDate && formatDate(permission.date_to) !== filters.endDate) return false;
+      if (filters.endTime && !permission.time_to.includes(filters.endTime)) return false;
+      if (filters.reason && !permission.reason.includes(filters.reason)) return false;
+      if (filters.attachment && !permission.attachment.includes(filters.attachment)) return false;
+      return true;
+    });
+
+  
+    return (
+      <div className="content">
+        <Typography variant="h4" gutterBottom>Permission History</Typography>
+        <div className="filter-container">
+          <TextField label="Type" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'type')} />
+          <TextField label="Status" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'status')} />
+          <TextField label="Start Date (DD/MM/YYYY)" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'startDate')} />
+          <TextField label="Start Time" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'startTime')} />
+          <TextField label="End Date (DD/MM/YYYY)" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'endDate')} />
+          <TextField label="End Time" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'endTime')} />
+          <TextField label="Reason" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'reason')} />
+        </div>
+        <Paper style={{ marginTop: '20px' }}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan="8">No permissions found.</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Start Date</TableCell>
+                <TableCell>Start Time</TableCell>
+                <TableCell>End Date</TableCell>
+                <TableCell>End Time</TableCell>
+                <TableCell>Reason</TableCell>
+                <TableCell>Attachment</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Paper>
-    </div>
-  );
-}
-
+            </TableHead>
+            <TableBody>
+              {filteredPermissions.length > 0 ? (
+                filteredPermissions.map((permission) => (
+                  <TableRow key={permission.id}>
+                    <TableCell>{permission.req_type}</TableCell>
+                    <TableCell>{getStatusLabel(permission.status)}</TableCell>
+                    <TableCell>{formatDate(permission.date_from)}</TableCell>
+                    <TableCell>{permission.time_from}</TableCell>
+                    <TableCell>{formatDate(permission.date_to)}</TableCell>
+                    <TableCell>{permission.time_to}</TableCell>
+                    <TableCell>{permission.reason}</TableCell>
+                    <TableCell>{permission.attachment}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="8" align="center">No permissions found.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Paper>
+      </div>
+    );
+  }
 
 function NewLeave() {
   const navigate = useNavigate();
@@ -501,6 +590,8 @@ function NewLeave() {
   const [attachment, setAttachment] = useState(null);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState({ open: false, message: "" });
+
 
   
   const userCookie = Cookies.get('user');
@@ -550,96 +641,134 @@ function NewLeave() {
       setLeaveType("");
       setReason("");
       setAttachment(null);
-      setSuccess(true);
-      setError(null);
-  
-      navigate("/leavehistory");
+
+      // Set success notification
+      setNotification({
+        open: true,
+        message: "Leave submitted successfully!",
+      });
     } catch (error) {
       console.error("Error submitting leave:", error.response.data);
       setError(error.response.data);
       setSuccess(false);
     }
   };
-  
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
   return (
-    <div className="content">
-      <h2>New Leave</h2>
+    <Container component={Paper} style={{ padding: 20 }}>
+      <Typography variant="h4" gutterBottom>New Leave</Typography>
       {success && <p>Leave submitted successfully.</p>}
       {error && <p>Error submitting leave: {error}</p>}
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="startDate">Start Date:</label>
-          <br />
-          <DatePicker
-            selected={startDate}
-            onChange={setStartDate}
-            dateFormat="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="endDate">End Date:</label>
-          <br />
-          <DatePicker
-            selected={endDate}
-            onChange={setEndDate}
-            dateFormat="yyyy-MM-dd"
-            calendarIcon={null}
-            clearIcon={null}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="leaveType">Leave Type:</label>
-          <br />
-          <select
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <FormControl fullWidth style={{ marginBottom: 15 }}>
+            <DatePicker label="Start Date" selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
+          </FormControl>
+          <FormControl fullWidth style={{ marginBottom: 15 }}>
+            <DatePicker label="End Date" selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
+          </FormControl>
+        </LocalizationProvider>
+        <FormControl fullWidth variant="outlined" style={{ marginBottom: 15 }}>
+          <InputLabel htmlFor="leaveType">Leave Type</InputLabel>
+          <Select
+            label="Leave Type"
             id="leaveType"
-            name="leaveType"
             value={leaveType}
             onChange={(e) => setLeaveType(e.target.value)}
             required
           >
-            <option value="">Select Leave Type</option>
-            <option value="Annual Leave">Annual Leave</option>
-            <option value="Sick Leave">Sick Leave</option>
-            <option value="Other Leave">Other Leave</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="reason">Reason:</label>
-          <br />
-          <textarea
-            type="text"
-            id="reason"
-            name="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            style={{width: '100%', height: '60px', padding: '10px'}}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="attachment">Attachment:</label>
-          <br />
-          <input
-            type="file"
-            id="attachment"
-            name="attachment"
-            onChange={(e) => setAttachment(e.target.files[0])}
-          />
-        </div>
-        <button type="submit">Submit</button>
+            <MenuItem value=""><em>Select Leave Type</em></MenuItem>
+            <MenuItem value="Annual Leave">Annual Leave</MenuItem>
+            <MenuItem value="Sick Leave">Sick Leave</MenuItem>
+            <MenuItem value="Other Leave">Other Leave</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="Reason"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          fullWidth
+          required
+          multiline
+          rows={4}
+          style={{ marginBottom: 15 }}
+        />
+        <Button variant="contained" component="label" color="primary">
+          Upload Attachment
+          <input type="file" hidden onChange={(e) => setAttachment(e.target.files[0])} />
+        </Button>
+        <Button type="submit" variant="contained" color="primary" style={{ marginTop: 20 }}>
+          Submit
+        </Button>
       </form>
-    </div>
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+      >
+        <Alert onClose={handleCloseNotification} severity="success" sx={{ width: "100%" }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 }
 
-
-
 function LeaveHistory() {
   const [leaves, setLeaves] = useState([]);
+  const [filters, setFilters] = useState({
+    type: "",
+    status: "",
+    startDate: "",
+    endDate: "",
+    reason: "",
+    attachment: "",
+  });
+
+  const formatDate = (dateString) => {
+    const [year, month, day] = dateString.split("T")[0].split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const handleSearchChange = (e, field) => {
+    setFilters({ ...filters, [field]: e.target.value });
+  };
+
+  const filteredLeaves = leaves.filter((leave) => {
+    if (
+      filters.type &&
+      !leave.req_type.toLowerCase().includes(filters.type.toLowerCase())
+    )
+      return false;
+    if (
+      filters.status &&
+      leave.status.toLowerCase() !== filters.status.toLowerCase()
+    )
+      return false;
+    if (
+      filters.startDate &&
+      formatDate(leave.date_from) !== filters.startDate
+    )
+      return false;
+    if (
+      filters.endDate &&
+      formatDate(leave.date_to) !== filters.endDate
+    )
+      return false;
+    if (
+      filters.reason &&
+      !leave.reason.toLowerCase().includes(filters.reason.toLowerCase())
+    )
+      return false;
+    if (
+      filters.attachment &&
+      !leave.attachment.toLowerCase().includes(filters.attachment.toLowerCase())
+    )
+      return false;
+    return true;
+  });
 
   useEffect(() => {
     const fetchLeaveHistory = async () => {
@@ -669,6 +798,11 @@ function LeaveHistory() {
         if (response.data && response.data.length > 0) {
           // Exclude leaves of type "Permission"
           const filteredLeaves = response.data.filter(leave => leave.req_type.toLowerCase() !== "permission");
+
+            // Sort by request date in descending order (newest to oldest)
+            filteredLeaves.sort((a, b) => new Date(b.req_datetime) - new Date(a.req_datetime));
+
+          
           setLeaves(filteredLeaves);
         } else {
           setLeaves([]);
@@ -693,32 +827,81 @@ function LeaveHistory() {
   };
   return (
     <div className="content">
-      <h2>Leave History</h2>
-      <br/>
-      <br/>
-      {leaves.length > 0 ? (
-        <Box className="leave-container">
-          {leaves.map((leave) => (
-            <div className="leave-card" key={leave.id}>
-              
-              
-              <div className="leave-card-header">
-                <p >{leave.req_type}</p >
-              </div>
-              <Box>
-                <p size="small">{getStatusLabel(leave.status)}</p>
-                <p>Start Date: {leave.date_from.split('T')[0]}</p>
-                <p>End Date: {leave.date_to.split('T')[0]}</p>
-                <p>Reason: {leave.reason}</p>
-                <p>Attachment: {leave.attachment}</p>
-                </Box>
-              <br/>
-            </div>
-          ))}
-        </Box>
-      ) : (
-        <p>No leaves found.</p>
-      )}
+      <Typography variant="h4" gutterBottom>
+        Leave History
+      </Typography>
+      <div className="filter-container">
+        <TextField
+          label="Type"
+          variant="outlined"
+          size="small"
+          onChange={(e) => handleSearchChange(e, "type")}
+        />
+        <TextField
+          label="Status"
+          variant="outlined"
+          size="small"
+          onChange={(e) => handleSearchChange(e, "status")}
+        />
+        <TextField
+          label="Start Date (DD/MM/YYYY)"
+          variant="outlined"
+          size="small"
+          onChange={(e) => handleSearchChange(e, "startDate")}
+        />
+        <TextField
+          label="End Date (DD/MM/YYYY)"
+          variant="outlined"
+          size="small"
+          onChange={(e) => handleSearchChange(e, "endDate")}
+        />
+        <TextField
+          label="Reason"
+          variant="outlined"
+          size="small"
+          onChange={(e) => handleSearchChange(e, "reason")}
+        />
+        <TextField
+          label="Attachment"
+          variant="outlined"
+          size="small"
+          onChange={(e) => handleSearchChange(e, "attachment")}
+        />
+      </div>
+      <Paper style={{ marginTop: "20px" }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Type</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>End Date</TableCell>
+              <TableCell>Reason</TableCell>
+              <TableCell>Attachment</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredLeaves.length > 0 ? (
+              filteredLeaves.map((leave) => (
+                <TableRow key={leave.id}>
+                  <TableCell>{leave.req_type}</TableCell>
+                  <TableCell>{getStatusLabel(leave.status)}</TableCell>
+                  <TableCell>{formatDate(leave.date_from)}</TableCell>
+                  <TableCell>{formatDate(leave.date_to)}</TableCell>
+                  <TableCell>{leave.reason}</TableCell>
+                  <TableCell>{leave.attachment}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan="6" align="center">
+                  No leaves found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
     </div>
   );
 }
@@ -729,40 +912,94 @@ function Home() {
   const userCookie = Cookies.get('user');
   const user = userCookie ? JSON.parse(userCookie) : null;
 
+  // Fetch the daily quote
+  const [quote, setQuote] = useState('');
+  useEffect(() => {
+    fetch('https://api.quotable.io/random')
+      .then(response => response.json())
+      .then(data => setQuote(data.content));
+  }, []);
+
+    // State to hold weather data
+    const [weather, setWeather] = useState(null);
+
+    // Fetch weather data on component mount
+    useEffect(() => {
+      const city = 'Kuwait'; // You can change this to your desired city
+      const apiKey = '241391722acb2320b0a15bb143ab7d90'; // Replace with your actual API key
+  
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+        .then(response => response.json())
+        .then(data => {
+          const weatherInfo = {
+            temperature: Math.round(data.main.temp),
+            description: data.weather[0].description,
+          };
+          setWeather(weatherInfo);
+        })
+        .catch(error => console.error('Error fetching weather:', error));
+    }, []);
+
   return (
-    <div className="content">
+    <div className="content home-content">
       <h2>Welcome, {user ? user.name : 'Guest'}!</h2>
-      {user && (
-        <div>
-          <p>Name: {user.name}</p>
-          <p>Email: {user.email}</p>
-          <p>Mobile: {user.mobile}</p>
-        </div>
-      )}
-      {/* You can display some welcome message or other content here */}
+      <h3 className="welcome-message">We're glad to have you here. Feel free to explore and manage your requests.</h3>
+      <div className="user-profile-card">
+        {user && (
+          <>
+            <img src="profile-image-placeholder.png" alt="Profile " />
+            <p>Name: {user.name}</p>
+            <p>Email: {user.email}</p>
+            <p>Mobile: {user.mobile}</p>
+          </>
+        )}
+      </div>
+      <div className="daily-quote">
+        <blockquote>{quote}</blockquote>
+      </div>
+      {/* <div className="weather-widget">
+        {weather ? (
+          <p>Your local weather: {weather.temperature}°C, {weather.description}</p>
+        ) : (
+          <p>Loading weather...</p>
+        )}
+      </div> */}
+      <div id="openweathermap-widget-24"></div>
     </div>
   );
 }
 
+
+
+
+
 function App() {
   const [darkMode, setDarkMode] = useState(false);
-  const [user, setUser] = useState(null);
+  const userCookie = Cookies.get('user');
+  const [user, setUser] = useState(userCookie ? JSON.parse(userCookie) : null);
 
 
-  const handleSignIn = async (username, password) => { // Updated parameters
-    try {
-      const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
-      if (response.data.token) {
-        Cookies.set('token', response.data.token);
-        Cookies.set('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
-        navigate('/'); // Redirect to home page
-      }
-    } catch (error) {
-      // Handle sign-in error
-      console.error('Error signing in:', error);
+// Toggle dark mode function
+const toggleDarkMode = () => {
+  setDarkMode(!darkMode);
+};
+
+
+const handleSignIn = async (username, password) => {
+  try {
+    const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
+    if (response.data.token) {
+      Cookies.set('token', response.data.token);
+      Cookies.set('user', JSON.stringify(response.data.user));
+      setUser(response.data.user);
+    } else {
+      throw new Error('Failed to sign in');
     }
-  };
+  } catch (error) {
+    // You can customize the error message if needed
+    throw new Error('Error signing in');
+  }
+};
 
   const handleSignUp = async (credentials) => {
     try {
@@ -771,53 +1008,73 @@ function App() {
         Cookies.set('token', response.data.token);
         Cookies.set('user', JSON.stringify(response.data.user));
         setUser(response.data.user);
-        navigate('/'); // Redirect to home page
+       
+     
       }
     } catch (error) {
       // Handle sign-up error
       console.error('Error signing up:', error);
+      
     }
   };
   
 
   const handleSignOut = () => {
-    // Remove user data and token from cookies
     Cookies.remove('user');
     Cookies.remove('token');
     setUser(null);
-    navigate('/'); // Redirect to home page or login page
+    navigate('/signin'); // Redirect to sign-in page
   };
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+      primary: {
+        main: '#4caf50', // Your green color
+      },
+    },
+  });
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   return (
-    <Router>
-      <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1>Leave and Permission Management</h1>
-        </header>
-        <div className="container">
-          <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
+          <header className="App-header">
+            <img src={logo} className="App-logo" alt="logo" />
+            <h1 variant="h6" style={{ flexGrow: 1 }}>
+              Leave and Permission Management
+            </h1>
+          </header>
           <Routes>
-            <Route path="/signin" element={<SignIn handleSignIn={handleSignIn} />} caseSensitive />
-            <Route path="/signup" element={<SignUp handleSignUp={handleSignUp} />} caseSensitive />
-            <Route path="/newpermission" element={<NewPermission />} caseSensitive />
-            <Route path="/permissionhistory" element={<PermissionHistory />} caseSensitive />
-            <Route path="/newleave" element={<NewLeave />} caseSensitive />
-            <Route path="/leavehistory" element={<LeaveHistory />} caseSensitive />
-            <Route path="/" element={<Home user={user} />} caseSensitive /> {/* Passing user prop */}
+            {user ? (
+              <Route
+                path="/*"
+                element={
+                  <div className="container">
+                    <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} handleSignOut={handleSignOut} />
+                    <Routes>
+                      <Route path="/newpermission" element={<NewPermission />} />
+                      <Route path="/permissionhistory" element={<PermissionHistory />} />
+                      <Route path="/newleave" element={<NewLeave />} />
+                      <Route path="/leavehistory" element={<LeaveHistory />} />
+                      <Route path="/" element={<Home user={user} />} />
+                    </Routes>
+                  </div>
+                }
+              />
+            ) : (
+              <>
+               <Route path="/signin" element={<SignIn handleSignIn={handleSignIn} />} />
+
+                <Route path="/signup" element={<SignUp handleSignUp={handleSignUp} />} />
+                <Route path="/*" element={<Navigate to="/signin" />} />
+              </>
+            )}
           </Routes>
         </div>
-        <footer className="App-footer">
-          {user && <p>Welcome, {user.username}!</p>}
-          {user && <button onClick={handleSignOut}>Sign Out</button>}
-        </footer>
-      </div>
-    </Router>
+      </Router>
+    </ThemeProvider>
   );
 }
-
 export default App;
