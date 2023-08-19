@@ -38,6 +38,30 @@
 
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
+
+
     -->
+
+
+    <script>
+      window.myWidgetParam ? window.myWidgetParam : window.myWidgetParam = [];
+      window.myWidgetParam.push({
+        id: 24,
+        cityid: '285787',
+        appid: '241391722acb2320b0a15bb143ab7d90',
+        units: 'metric',
+        containerid: 'openweathermap-widget-24',
+      });
+      (function () {
+        var script = document.createElement('script');
+        script.async = true;
+        script.charset = 'utf-8';
+        script.src =
+          '//openweathermap.org/themes/openweathermap/assets/vendor/owm/js/weather-widget-generator.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(script, s);
+      })();
+    </script>
+    
   </body>
 </html>
