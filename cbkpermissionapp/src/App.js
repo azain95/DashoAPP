@@ -310,6 +310,8 @@ function NewPermission() {
   const [reason, setReason] = useState('');
   const [user, setUser] = useState(null);
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+  const [reqType, setReqType] = useState('permission'); // New state to store request type
+
 
 
   useEffect(() => {
@@ -346,9 +348,9 @@ function NewPermission() {
     // Log the user object to the console
     console.log('User object:', user);
   
-    const permission = {
+     const permission = {
       req_datetime: new Date().toISOString(),
-      req_type: 'permission',
+      req_type: reqType, 
       date_from: startDate.toISOString(),
       date_to: endDate.toISOString(),
       time_from: formattedStartTime,
@@ -402,7 +404,18 @@ setReason('');
       <h2>New Permission</h2>
       <form onSubmit={handleSubmit}>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <InputLabel htmlFor="startDate">Start Date:</InputLabel>
+          <FormControl variant="outlined" fullWidth style={{ marginBottom: 15 }}>
+            <InputLabel htmlFor="reqType">Request Type</InputLabel>
+            <Select
+              label="Request Type"
+              value={reqType}
+              onChange={(e) => setReqType(e.target.value)}
+            >
+              <MenuItem value="permission">Permission</MenuItem>
+              <MenuItem value="swap">Swap</MenuItem>
+            </Select>
+          </FormControl>
+          <InputLabel htmlFor="startDate">Start Date:</InputLabel>
           <FormControl fullWidth style={{ marginBottom: 15 }}>
             <DatePicker selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
           </FormControl>
@@ -412,7 +425,7 @@ setReason('');
             onChange={setStartTime}
             renderInput={(params) => <TextField {...params} fullWidth required />}
           />
-            <InputLabel htmlFor="endDate">End Date:</InputLabel>
+          <InputLabel htmlFor="endDate">End Date:</InputLabel>
           <FormControl fullWidth style={{ marginBottom: 15, marginTop: 15 }}>
             <DatePicker selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
           </FormControl>
@@ -440,15 +453,6 @@ setReason('');
 
 function PermissionHistory() {
   const [permissions, setPermissions] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const theme = useTheme();
-
-  const customStyles = {
-    backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#fff',
-    // Other custom styles...
-  };
-
   const [filters, setFilters] = useState({
     type: '',
     status: '',
@@ -459,9 +463,7 @@ function PermissionHistory() {
     reason: '',
     attachment: ''
   });
-
-
-  
+  const theme = useTheme();
 
   useEffect(() => {
     const fetchPermissionHistory = async () => {
@@ -481,7 +483,7 @@ function PermissionHistory() {
         });
 
         if (response.data && response.data.length > 0) {
-          const permissionsData = response.data.filter(req => req.req_type.toLowerCase() === 'permission');
+          const permissionsData = response.data.filter(req => ['permission', 'swap'].includes(req.req_type.toLowerCase()));
           permissionsData.sort((a, b) => new Date(b.req_datetime) - new Date(a.req_datetime));
           setPermissions(permissionsData);
         } else {
@@ -506,80 +508,79 @@ function PermissionHistory() {
     }
   };
 
-  const handleSearchChange = (e, field) => {
-    setFilters({ ...filters, [field]: e.target.value });
-  };
-
-  // Helper function to format date for display
   const formatDate = (dateString) => {
     const [year, month, day] = dateString.split('T')[0].split('-');
     return `${day}/${month}/${year}`;
   };
 
-    const filteredPermissions = permissions.filter((permission) => {
-      if (filters.type && !permission.req_type.includes(filters.type)) return false;
-      if (filters.status && permission.status !== filters.status) return false;
-      if (filters.startDate && formatDate(permission.date_from) !== filters.startDate) return false;
-      if (filters.startTime && !permission.time_from.includes(filters.startTime)) return false;
-      if (filters.endDate && formatDate(permission.date_to) !== filters.endDate) return false;
-      if (filters.endTime && !permission.time_to.includes(filters.endTime)) return false;
-      if (filters.reason && !permission.reason.includes(filters.reason)) return false;
-      if (filters.attachment && !permission.attachment.includes(filters.attachment)) return false;
-      return true;
-    });
+  const handleSearchChange = (e, field) => {
+    setFilters({ ...filters, [field]: e.target.value });
+  };
 
-  
-    return (
-      <div className="content">
-        <Typography variant="h4" gutterBottom>Permission History</Typography>
-        <div className="filter-container">
-          <TextField label="Type" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'type')} />
-          <TextField label="Status" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'status')} />
-          <TextField label="Start Date (DD/MM/YYYY)" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'startDate')} />
-          <TextField label="Start Time" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'startTime')} />
-          <TextField label="End Date (DD/MM/YYYY)" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'endDate')} />
-          <TextField label="End Time" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'endTime')} />
-          <TextField label="Reason" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'reason')} />
-        </div>
-        <Paper style={{ marginTop: '20px' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Start Date</TableCell>
-                <TableCell>Start Time</TableCell>
-                <TableCell>End Date</TableCell>
-                <TableCell>End Time</TableCell>
-                <TableCell>Reason</TableCell>
-                <TableCell>Attachment</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredPermissions.length > 0 ? (
-                filteredPermissions.map((permission) => (
-                  <TableRow key={permission.id}>
-                    <TableCell>{permission.req_type}</TableCell>
-                    <TableCell>{getStatusLabel(permission.status)}</TableCell>
-                    <TableCell>{formatDate(permission.date_from)}</TableCell>
-                    <TableCell>{permission.time_from}</TableCell>
-                    <TableCell>{formatDate(permission.date_to)}</TableCell>
-                    <TableCell>{permission.time_to}</TableCell>
-                    <TableCell>{permission.reason}</TableCell>
-                    <TableCell>{permission.attachment}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan="8" align="center">No permissions found.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Paper>
+  const filteredPermissions = permissions.filter((permission) => {
+    if (filters.type && !permission.req_type.includes(filters.type)) return false;
+    if (filters.status && permission.status !== filters.status) return false;
+    if (filters.startDate && formatDate(permission.date_from) !== filters.startDate) return false;
+    if (filters.startTime && !permission.time_from.includes(filters.startTime)) return false;
+    if (filters.endDate && formatDate(permission.date_to) !== filters.endDate) return false;
+    if (filters.endTime && !permission.time_to.includes(filters.endTime)) return false;
+    if (filters.reason && !permission.reason.includes(filters.reason)) return false;
+    if (filters.attachment && !permission.attachment.includes(filters.attachment)) return false;
+    return true;
+  });
+
+  return (
+    <div className="content">
+      <Typography variant="h4" gutterBottom>Permission History</Typography>
+      <div className="filter-container">
+        <TextField label="Type" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'type')} />
+        <TextField label="Status" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'status')} />
+        <TextField label="Start Date (DD/MM/YYYY)" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'startDate')} />
+        <TextField label="Start Time" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'startTime')} />
+        <TextField label="End Date (DD/MM/YYYY)" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'endDate')} />
+        <TextField label="End Time" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'endTime')} />
+        <TextField label="Reason" variant="outlined" size="small" onChange={(e) => handleSearchChange(e, 'reason')} />
       </div>
-    );
-  }
+      <Paper style={{ marginTop: '20px' }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Type</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>Start Time</TableCell>
+              <TableCell>End Date</TableCell>
+              <TableCell>End Time</TableCell>
+              <TableCell>Reason</TableCell>
+              <TableCell>Attachment</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredPermissions.length > 0 ? (
+              filteredPermissions.map((permission) => (
+                <TableRow key={permission.id}>
+                  <TableCell>{permission.req_type}</TableCell>
+                  <TableCell>{getStatusLabel(permission.status)}</TableCell>
+                  <TableCell>{formatDate(permission.date_from)}</TableCell>
+                  <TableCell>{permission.time_from}</TableCell>
+                  <TableCell>{formatDate(permission.date_to)}</TableCell>
+                  <TableCell>{permission.time_to}</TableCell>
+                  <TableCell>{permission.reason}</TableCell>
+                  <TableCell>{permission.attachment}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+              <TableCell colSpan="8" align="center">No permissions found.</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Paper>
+  </div>
+);
+}
+
 
 function NewLeave() {
   const navigate = useNavigate();
@@ -796,8 +797,11 @@ function LeaveHistory() {
         });
 
         if (response.data && response.data.length > 0) {
-          // Exclude leaves of type "Permission"
-          const filteredLeaves = response.data.filter(leave => leave.req_type.toLowerCase() !== "permission");
+          // Exclude leaves of type "permission" and "swap"
+          const filteredLeaves = response.data.filter(
+            (leave) => leave.req_type.toLowerCase() !== "permission" && leave.req_type.toLowerCase() !== "swap"
+          );
+
 
             // Sort by request date in descending order (newest to oldest)
             filteredLeaves.sort((a, b) => new Date(b.req_datetime) - new Date(a.req_datetime));
@@ -974,7 +978,7 @@ function Home() {
 
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const userCookie = Cookies.get('user');
   const [user, setUser] = useState(userCookie ? JSON.parse(userCookie) : null);
 
