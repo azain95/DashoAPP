@@ -1,10 +1,10 @@
 /* App.css */
 
-@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300&family=Quicksand&display=swap');
 .App {
   text-align: center;
-  font-family: 'Josefin Sans', sans-serif;
+  font-family: 'Cairo', sans-serif;
+
   input[type='text'],
   input[type='password'],
   input[type='date'],
@@ -375,4 +375,25 @@ nav {
   background-color: #4caf50; /* Your desired green color */
   /* Other styles... */
   
+}
+
+
+.welcome-container {
+  margin-top: 20px; /* Adjust this value as needed */
+}
+
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.rotate-logo {
+  animation: rotate 5s linear infinite;
+  height: 80px;
+  pointer-events: none;
 }
