@@ -29,40 +29,8 @@ import NewPermission from './components/NewPermission';
 import PermissionHistory from './components/PermissionHistory';
 import NewLeave from './components/NewLeave';
 import LeaveHistory from './components/LeaveHistory';
-
-// import { TimePicker } from 'react-ios-time-picker';
-
-
-
 import logo from './logocbk.png';
 import './App.css';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -170,7 +138,7 @@ const handleSignIn = async (username, password) => {
               <>
                <Route path="/signin" element={<SignIn handleSignIn={handleSignIn} />} />
 
-                <Route path="/signup" element={<SignUp handleSignUp={handleSignUp} />} />
+                {/* <Route path="/signup" element={<SignUp handleSignUp={handleSignUp} />} /> */}
                 <Route path="/*" element={<Navigate to="/signin" />} />
               </>
             )}
