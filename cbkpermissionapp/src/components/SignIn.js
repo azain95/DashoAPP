@@ -74,9 +74,9 @@ function SignIn(props) {
           >
             Sign In
           </Button>
-          <Typography variant="body2" style={{ textAlign: 'center', marginTop: 10 }}>
+          {/* <Typography variant="body2" style={{ textAlign: 'center', marginTop: 10 }}>
             Don't have an account? <MuiLink component={RouterLink} to="/signup" variant="body2">Sign Up</MuiLink>
-          </Typography>
+          </Typography> */}
         </form>
       </Paper>
     </Container>
