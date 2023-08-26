@@ -48,7 +48,7 @@ function PermissionHistory() {
   
           const token = Cookies.get('token');
   
-          const response = await axios.get(`http://localhost:5000/requests/user/${user.user_id}`, {
+          const response = await axios.get(`http://165.227.148.16:5000/requests/user/${user.user_id}`, {
             headers: {
               Authorization: `Bearer ${token}`
             }

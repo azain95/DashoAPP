@@ -63,7 +63,7 @@ function NewLeave() {
       };
     
       try {
-        const response = await axios.post("http://localhost:5000/requests", leave, {
+        const response = await axios.post("http://165.227.148.16:5000/requests", leave, {
           headers: {
             Authorization: `Bearer ${token}` // Including the token in the Authorization header
           }

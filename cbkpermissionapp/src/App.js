@@ -65,7 +65,7 @@ const toggleDarkMode = () => {
 
 const handleSignIn = async (username, password) => {
   try {
-    const response = await axios.post('http://localhost:5000/signin', { user_id: username, password });
+    const response = await axios.post('http://165.227.148.16:5000/signin', { user_id: username, password });
     if (response.data.token) {
       Cookies.set('token', response.data.token);
       Cookies.set('user', JSON.stringify(response.data.user));
@@ -81,7 +81,7 @@ const handleSignIn = async (username, password) => {
 
   const handleSignUp = async (credentials) => {
     try {
-      const response = await axios.post('http://localhost:5000/signup', credentials);
+      const response = await axios.post('http://165.227.148.16:5000/signup', credentials);
       if (response.data.token) {
         Cookies.set('token', response.data.token);
         Cookies.set('user', JSON.stringify(response.data.user));
