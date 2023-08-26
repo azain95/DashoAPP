@@ -29,7 +29,7 @@ import NewPermission from './components/NewPermission';
 import PermissionHistory from './components/PermissionHistory';
 import NewLeave from './components/NewLeave';
 import LeaveHistory from './components/LeaveHistory';
-import logo from './logocbk.png';
+import logo from './logo.png';
 import './App.css';
 
 
@@ -114,7 +114,7 @@ const handleSignIn = async (username, password) => {
           <header className="App-header">
             <img src={logo} className="rotate-logo" alt="logo" />
             <h1 variant="h6" style={{ flexGrow: 1 }}>
-              Leave and Permission Management
+              DASHO Leaves and Permissions App
             </h1>
           </header>
           <Routes>
