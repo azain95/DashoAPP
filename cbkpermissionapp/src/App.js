@@ -114,7 +114,7 @@ const handleSignIn = async (username, password) => {
           <header className="App-header">
             <img src={logo} className="rotate-logo" alt="logo" />
             <h1 variant="h6" style={{ flexGrow: 1 }}>
-              DASHO Leaves and Permissions App
+              DASHO Leaves and Permissions
             </h1>
           </header>
           <Routes>
