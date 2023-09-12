@@ -20,6 +20,7 @@ import { Snackbar } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import { Link as RouterLink } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
+import { formatISO } from 'date-fns';
 
 
 function NewPermission() {
@@ -71,11 +72,11 @@ function NewPermission() {
        const permission = {
         req_datetime: new Date().toISOString(),
         req_type: reqType, 
-        date_from: startDate.toISOString(),
-        date_to: endDate.toISOString(),
+        date_from: formatISO(startDate, { representation: 'date' }),
+        date_to: formatISO(endDate, { representation: 'date' }),
         time_from: formattedStartTime,
         time_to: formattedEndTime,
-        user_id: user.user_id, // Now safe to access, as we've checked that user is defined
+        user_id: user.user_id,
         reason: reason,
         status: 'pending',
       };
