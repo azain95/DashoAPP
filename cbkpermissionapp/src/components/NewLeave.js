@@ -11,6 +11,8 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Snackbar } from '@mui/material';
 import Alert from '@mui/material/Alert';
+import { formatISO } from 'date-fns';
+
 
 
 
@@ -53,8 +55,8 @@ function NewLeave() {
       const leave = {
         req_datetime: new Date().toISOString(),
         req_type: leaveType.toLowerCase(),
-        date_from: startDate.toISOString().split("T")[0],
-        date_to: endDate.toISOString().split("T")[0],
+        date_from: formatISO(startDate, { representation: 'date' }),
+        date_to: formatISO(endDate, { representation: 'date' }),
         time_from: "00:00:00",
         time_to: "00:00:00",
         user_id: user.user_id,
