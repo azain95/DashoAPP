@@ -28,7 +28,7 @@ function SignUp() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://165.227.148.16:5000/signup', { email, password });
+      const response = await axios.post('https://api.dashoprojects.com/signup', { email, password });
       console.log(response.data); // Handle success response
     } catch (error) {
       console.error(error); // Handle error response
