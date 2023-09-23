@@ -85,7 +85,7 @@ function NewPermission() {
       const token = Cookies.get('token');
     
       try {
-        const response = await axios.post('http://165.227.148.16:5000/requests', permission, {
+        const response = await axios.post('https://api.dashoprojects.com/requests', permission, {
           headers: {
             Authorization: `Bearer ${token}` // Including the token in the Authorization header
           }
