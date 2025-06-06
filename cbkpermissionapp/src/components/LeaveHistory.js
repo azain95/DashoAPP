@@ -19,8 +19,10 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { PageContainer, ContentCard } from './styled/Layout';
-import axios from 'axios';
+import axios from '../utils/axiosInstance'; // adjust the path based on your file structure
 import { styled } from '@mui/material/styles';
+import useAuthGuard from '../hooks/useAuthGuard'; 
+
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -72,6 +74,7 @@ const StatusChip = styled(Chip)(({ theme, status }) => {
 });
 
 function LeaveHistory() {
+    useAuthGuard();
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const theme = useTheme();

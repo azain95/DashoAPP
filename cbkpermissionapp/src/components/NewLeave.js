@@ -25,9 +25,12 @@ import {
   PrimaryButton,
 } from './styled/Forms';
 import Cookies from 'js-cookie';
-import axios from 'axios';
+import axios from '../utils/axiosInstance'; // adjust the path based on your file structure
+import useAuthGuard from '../hooks/useAuthGuard'; 
+
 
 function NewLeave() {
+    useAuthGuard();
   const [startDate, setStartDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
