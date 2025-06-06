@@ -21,153 +21,198 @@ import Alert from '@mui/material/Alert';
 import { Link as RouterLink } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import { formatISO } from 'date-fns';
-
+import {
+  PageContainer,
+  ContentCard,
+  FormSection,
+  ActionBar,
+} from './styled/Layout';
+import {
+  StyledTextField,
+  StyledSelect,
+  StyledDatePicker,
+  StyledTimePicker,
+  PrimaryButton,
+} from './styled/Forms';
 
 function NewPermission() {
-    const [startDate, setStartDate] = useState(new Date());
-    const [startTime, setStartTime] = useState(new Date()); // Initialize with a Date object
-    const [endDate, setEndDate] = useState(new Date());
-    const [endTime, setEndTime] = useState(new Date()); // Initialize with a Date object
-    const [reason, setReason] = useState('');
-    const [user, setUser] = useState(null);
-    const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
-    const [reqType, setReqType] = useState('permission'); // New state to store request type
-  
-  
-  
-    useEffect(() => {
-      const userData = Cookies.get('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-    }, []);
-  
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      const user = JSON.parse(Cookies.get('user'));
-  
-          // Format the time values
-          const formattedStartTime = format(startTime, 'HH:mm');
-          const formattedEndTime = format(endTime, 'HH:mm');
-  
-              // Check if time is selected
-      if (formattedStartTime === 'Invalid Date' || formattedEndTime === 'Invalid Date') {
-        setNotification({
-          open: true,
-          message: 'Please select a valid start and end time.',
-          severity: 'error',
-        });
-        return;
-      }
-    
-      // Check that the user object exists before attempting to access its properties
-      if (!user) {
-        console.error('User object is undefined');
-        return;
-      }
-    
-      // Log the user object to the console
-      console.log('User object:', user);
-    
-       const permission = {
-        req_datetime: new Date().toISOString(),
-        req_type: reqType, 
-        date_from: formatISO(startDate, { representation: 'date' }),
-        date_to: formatISO(endDate, { representation: 'date' }),
-        time_from: formattedStartTime,
-        time_to: formattedEndTime,
-        user_id: user.user_id,
-        reason: reason,
-        status: 'pending',
-      };
-    
-      // Retrieve the token from cookies
-      const token = Cookies.get('token');
-    
-      try {
-        const response = await axios.post('https://api.dashoprojects.com/requests', permission, {
-          headers: {
-            Authorization: `Bearer ${token}` // Including the token in the Authorization header
-          }
-        });
-        // Clear the form fields
-        setStartDate(new Date());
-        setStartTime(new Date());
-        setEndDate(new Date());
-        setEndTime(new Date());
-        setReason('');
-  
-        setNotification({
-          open: true,
-          message: 'Request submitted successfully!',
-          severity: 'success',
-        });
-      } catch (error) {
-        console.error(error);
-        setNotification({
-          open: true,
-          message: 'Error submitting request. Please try again.',
-          severity: 'error',
-        });
-        // Clear the form fields
-  setStartDate(new Date());
-  setStartTime('12:00');
-  setEndDate(new Date());
-  setEndTime('12:00');
-  setReason('');
-      }
+  const [startDate, setStartDate] = useState(new Date());
+  const [startTime, setStartTime] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
+  const [reason, setReason] = useState('');
+  const [reqType, setReqType] = useState('permission');
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const user = JSON.parse(Cookies.get('user'));
+
+    const formattedStartTime = format(startTime, 'HH:mm');
+    const formattedEndTime = format(endTime, 'HH:mm');
+
+    if (formattedStartTime === 'Invalid Date' || formattedEndTime === 'Invalid Date') {
+      setNotification({
+        open: true,
+        message: 'Please select valid start and end times',
+        severity: 'error',
+      });
+      return;
+    }
+
+    if (!user) {
+      console.error('User object is undefined');
+      return;
+    }
+
+    const permission = {
+      req_datetime: new Date().toISOString(),
+      req_type: reqType,
+      date_from: formatISO(startDate, { representation: 'date' }),
+      date_to: formatISO(endDate, { representation: 'date' }),
+      time_from: formattedStartTime,
+      time_to: formattedEndTime,
+      user_id: user.user_id,
+      reason: reason,
+      status: 'pending',
     };
-    const handleCloseNotification = () => {
-      setNotification({ ...notification, open: false });
-    };
-    return (
-      <Container component={Paper} style={{ padding: 20 }}>
-        <h2>New Permission</h2>
-        <form onSubmit={handleSubmit}>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <FormControl variant="outlined" fullWidth style={{ marginBottom: 15 }}>
-              <InputLabel htmlFor="reqType">Request Type</InputLabel>
-              <Select
-                label="Request Type"
-                value={reqType}
-                onChange={(e) => setReqType(e.target.value)}
-              >
-                <MenuItem value="permission">Permission</MenuItem>
-                <MenuItem value="swap">Swap</MenuItem>
-              </Select>
-            </FormControl>
-            <InputLabel htmlFor="startDate">Start Date:</InputLabel>
-            <FormControl fullWidth style={{ marginBottom: 15 }}>
-              <DatePicker selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
-            </FormControl>
-            <TimePicker
-              label="Start Time"
-              value={startTime}
-              onChange={setStartTime}
-              renderInput={(params) => <TextField {...params} fullWidth required />}
-            />
-            <InputLabel htmlFor="endDate">End Date:</InputLabel>
-            <FormControl fullWidth style={{ marginBottom: 15, marginTop: 15 }}>
-              <DatePicker selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
-            </FormControl>
-            <TimePicker
-              label="End Time"
-              value={endTime}
-              onChange={setEndTime}
-              renderInput={(params) => <TextField {...params} fullWidth required />}
-            />
-            <TextField label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth required multiline rows={4} style={{ marginTop: 15 }} />
-            <Button type="submit" variant="contained" color="primary" style={{ marginTop: 20 }}>Submit</Button>
-          </LocalizationProvider>
-        </form>
-        <Snackbar open={notification.open} autoHideDuration={6000} onClose={handleCloseNotification}>
-          <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
+
+    const token = Cookies.get('token');
+
+    try {
+      await axios.post('https://api.dashoprojects.com/requests', permission, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setStartDate(new Date());
+      setStartTime(new Date());
+      setEndDate(new Date());
+      setEndTime(new Date());
+      setReason('');
+
+      setNotification({
+        open: true,
+        message: 'Request submitted successfully!',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error(error);
+      setNotification({
+        open: true,
+        message: 'Error submitting request. Please try again.',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <PageContainer>
+        <ContentCard>
+          <Typography variant="h4" gutterBottom>
+            New Permission Request
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <FormSection>
+              <FormControl fullWidth>
+                <InputLabel id="request-type-label">Request Type</InputLabel>
+                <StyledSelect
+                  labelId="request-type-label"
+                  value={reqType}
+                  onChange={(e) => setReqType(e.target.value)}
+                  label="Request Type"
+                >
+                  <MenuItem value="permission">Permission</MenuItem>
+                  <MenuItem value="swap">Swap</MenuItem>
+                </StyledSelect>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledDatePicker
+                  label="Start Date"
+                  value={startDate}
+                  onChange={setStartDate}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledTimePicker
+                  label="Start Time"
+                  value={startTime}
+                  onChange={setStartTime}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledDatePicker
+                  label="End Date"
+                  value={endDate}
+                  onChange={setEndDate}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledTimePicker
+                  label="End Time"
+                  value={endTime}
+                  onChange={setEndTime}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <StyledTextField
+                label="Reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                multiline
+                rows={4}
+                required
+              />
+
+              <ActionBar>
+                <PrimaryButton
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                >
+                  Submit Request
+                </PrimaryButton>
+              </ActionBar>
+            </FormSection>
+          </form>
+        </ContentCard>
+
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={6000}
+          onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={handleCloseNotification}
+            severity={notification.severity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
             {notification.message}
           </Alert>
         </Snackbar>
-      </Container>
-    );
-  }
+      </PageContainer>
+    </LocalizationProvider>
+  );
+}
 
-  
-  export default NewPermission
+export default NewPermission;

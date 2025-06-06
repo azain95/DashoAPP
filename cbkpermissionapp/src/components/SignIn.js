@@ -1,87 +1,177 @@
 // App.js
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, Navigate, Switch } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, TextField, Typography } from '@mui/material';
-import { AppBar, Toolbar, IconButton, Drawer, List, ListItem, ListItemText, useMediaQuery, useTheme, Grid } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import { Button, Link as MuiLink } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import axios from 'axios';
-import { TextareaAutosize } from '@mui/material';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TimePicker } from '@mui/x-date-pickers';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format } from 'date-fns';
-import { Snackbar } from '@mui/material';
-import Alert from '@mui/material/Alert';
-import { Link as RouterLink } from 'react-router-dom';
-import CssBaseline from '@mui/material/CssBaseline';
+import {
+  Typography,
+  Box,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import {
+  PageContainer,
+  ContentCard,
+  FormSection,
+  ActionBar,
+} from './styled/Layout';
+import { LogoContainer } from './styled/Logo';
+import {
+  StyledTextField,
+  PrimaryButton,
+} from './styled/Forms';
+import logo from '../logo.png';
+import { styled } from '@mui/material/styles';
 
+const LoginContainer = styled(Box)(({ theme }) => ({
+  minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(3),
+  background: theme.palette.mode === 'light'
+    ? 'linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%)'
+    : 'linear-gradient(135deg, rgba(10, 132, 255, 0.1) 0%, rgba(94, 92, 230, 0.1) 100%)',
+}));
 
-function SignIn(props) {
+const LoginCard = styled(ContentCard)(({ theme }) => ({
+  width: '100%',
+  maxWidth: '400px',
+  padding: theme.spacing(4),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(3),
+  },
+}));
+
+const LogoSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  marginBottom: theme.spacing(4),
+  '& .logo-container': {
+    marginBottom: theme.spacing(3),
+    position: 'relative',
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: '100%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '120px',
+      height: '2px',
+      background: `linear-gradient(90deg, 
+        transparent 0%, 
+        ${theme.palette.primary.main}40 50%, 
+        transparent 100%
+      )`,
+      marginTop: theme.spacing(3),
+    },
+  },
+}));
+
+const CompanyName = styled(Typography)(({ theme }) => ({
+  background: theme.palette.mode === 'light'
+    ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)'
+    : 'linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  textFillColor: 'transparent',
+  fontWeight: 700,
+  marginTop: theme.spacing(2),
+}));
+
+function SignIn({ handleSignIn }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      await props.handleSignIn(username, password); // Call the handleSignIn method passed as props
-      navigate('/'); // Redirect to the home page
+      await handleSignIn(username, password);
+      navigate('/');
     } catch (error) {
-      // Handle sign-in error
-      alert(error.message);
+      setError('Invalid username or password');
     }
   };
 
+  const handleCloseError = () => {
+    setError('');
+  };
+
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography variant="h5">
-          Sign In
+    <LoginContainer>
+      <LoginCard>
+        <LogoSection>
+          <Box className="logo-container">
+            <LogoContainer size="large">
+              <img
+                src={logo}
+                alt="Logo"
+              />
+            </LogoContainer>
+          </Box>
+          <CompanyName variant="h4">
+            DASHO
+          </CompanyName>
+        </LogoSection>
+        
+        <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
+          Sign in to manage your leaves and permissions
         </Typography>
-        <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: 15 }}>
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            style={{ marginTop: 15 }}
-          >
-            Sign In
-          </Button>
-          {/* <Typography variant="body2" style={{ textAlign: 'center', marginTop: 10 }}>
-            Don't have an account? <MuiLink component={RouterLink} to="/signup" variant="body2">Sign Up</MuiLink>
-          </Typography> */}
+
+        <form onSubmit={handleSubmit}>
+          <FormSection>
+            <StyledTextField
+              label="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              fullWidth
+              required
+              autoFocus
+              autoComplete="username"
+            />
+            <StyledTextField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              fullWidth
+              required
+              autoComplete="current-password"
+            />
+            <ActionBar>
+              <PrimaryButton
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
+              >
+                Sign In
+              </PrimaryButton>
+            </ActionBar>
+          </FormSection>
         </form>
-      </Paper>
-    </Container>
+      </LoginCard>
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseError}
+          severity="error"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
+    </LoginContainer>
   );
 }
-
 
 export default SignIn;
