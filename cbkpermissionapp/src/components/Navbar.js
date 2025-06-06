@@ -1,82 +1,209 @@
 // App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate } from 'react-router-dom';
 
 import {Typography } from '@mui/material';
-import { AppBar, Toolbar, IconButton, Drawer, List, ListItem, ListItemText, useMediaQuery, useTheme } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Drawer, List, ListItem, ListItemText, useMediaQuery, useTheme, Box, Switch, ListItemIcon } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Button, Link as MuiLink } from '@mui/material';
+import HomeIcon from '@mui/icons-material/Home';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import HistoryIcon from '@mui/icons-material/History';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import { styled } from '@mui/material/styles';
+import { LogoContainer } from './styled/Logo';
+import logo from '../logo.png';
 
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === 'light' 
+    ? 'rgba(255, 255, 255, 0.72)'
+    : 'rgba(28, 28, 30, 0.72)',
+  backdropFilter: 'blur(20px)',
+  borderBottom: `1px solid ${theme.palette.mode === 'light' 
+    ? 'rgba(0, 0, 0, 0.1)' 
+    : 'rgba(255, 255, 255, 0.1)'}`,
+  color: theme.palette.text.primary,
+}));
 
+const StyledNavLink = styled(NavLink)(({ theme }) => ({
+  color: theme.palette.text.primary,
+  textDecoration: 'none',
+  padding: '8px 16px',
+  borderRadius: 8,
+  transition: theme.transitions.create(['background-color', 'color']),
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'light'
+      ? 'rgba(0, 0, 0, 0.04)'
+      : 'rgba(255, 255, 255, 0.08)',
+  },
+  '&.active': {
+    backgroundColor: theme.palette.primary.main,
+    color: '#FFFFFF',
+  },
+}));
 
-function Navbar({ darkMode, toggleDarkMode , handleSignOut }) {
-    const [drawerOpen, setDrawerOpen] = React.useState(false);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-    const handleDrawerToggle = () => {
-      setDrawerOpen(!drawerOpen);
-    };
-  
-    const NavList = () => (
-      <List>
-           <ListItem button component={NavLink} to="/" activeClassName="active">
-          <ListItemText primary="Home" />
-        </ListItem>
-        <ListItem button component={NavLink} to="/newpermission" activeClassName="active">
-          <ListItemText primary="New Permission" />
-        </ListItem>
-        <ListItem button component={NavLink} to="/permissionhistory" activeClassName="active">
-          <ListItemText primary="Permissions History" />
-        </ListItem>
-        <ListItem button component={NavLink} to="/newleave" activeClassName="active">
-          <ListItemText primary="New Leave" />
-        </ListItem>
-        <ListItem button component={NavLink} to="/leavehistory" activeClassName="active">
-          <ListItemText primary="Leave History" />
-        </ListItem>
-        <ListItem button onClick={handleSignOut} component={NavLink} to="/signin" activeClassName="active">
-          <ListItemText primary="Logout" />
-        </ListItem>
-        <ListItem button onClick={toggleDarkMode}>
-          <ListItemText primary={darkMode ? 'Light Mode' : 'Dark Mode'} />
-        </ListItem>
-        
-      </List>
-    );
-  
-    return (
-      <AppBar position="static" className="navbar">
-        <Toolbar className="navbar">
+const StyledListItem = styled(ListItem)(({ theme }) => ({
+  borderRadius: 8,
+  margin: '4px 8px',
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'light'
+      ? 'rgba(0, 0, 0, 0.04)'
+      : 'rgba(255, 255, 255, 0.08)',
+  },
+}));
+
+const DrawerHeader = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(2),
+  borderBottom: `1px solid ${theme.palette.divider}`,
+}));
+
+function Navbar({ darkMode, toggleDarkMode, handleSignOut }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const menuItems = [
+    { text: 'Home', icon: <HomeIcon />, path: '/' },
+    { text: 'New Permission', icon: <AddCircleOutlineIcon />, path: '/newpermission' },
+    { text: 'Permission History', icon: <HistoryIcon />, path: '/permissionhistory' },
+    { text: 'New Leave', icon: <AddCircleOutlineIcon />, path: '/newleave' },
+    { text: 'Leave History', icon: <HistoryIcon />, path: '/leavehistory' },
+  ];
+
+  const drawer = (
+    <Box>
+      <DrawerHeader>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <LogoContainer size="small">
+            <img src={logo} alt="Logo" />
+          </LogoContainer>
+          <Typography variant="h6" component="div">
+            DASHO
+          </Typography>
+        </Box>
+      </DrawerHeader>
+      <Box sx={{ mt: 2 }}>
+        <List>
+          {menuItems.map((item) => (
+            <StyledListItem
+              button
+              key={item.text}
+              component={NavLink}
+              to={item.path}
+              onClick={() => isMobile && handleDrawerToggle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </StyledListItem>
+          ))}
+          <StyledListItem>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <DarkModeIcon />
+            </ListItemIcon>
+            <ListItemText primary="Dark Mode" />
+            <Switch
+              checked={darkMode}
+              onChange={toggleDarkMode}
+              color="primary"
+            />
+          </StyledListItem>
+          <StyledListItem button onClick={handleSignOut}>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <ExitToAppIcon />
+            </ListItemIcon>
+            <ListItemText primary="Sign Out" />
+          </StyledListItem>
+        </List>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      <StyledAppBar position="sticky" elevation={0}>
+        <Toolbar>
           {isMobile ? (
-            <>
-              <IconButton edge="start" color="inherit" aria-label="menu" onClick={handleDrawerToggle}>
-                <MenuIcon />
-              </IconButton>
-              <Typography variant="h6" style={{ flexGrow: 1 }}>
-                Leave and Permission Management
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          ) : null}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: isMobile ? 1 : 0 }}>
+            <LogoContainer size="small">
+              <img src={logo} alt="Logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+            </LogoContainer>
+            {!isMobile && (
+              <Typography variant="h6" component="div">
+                DASHO
               </Typography>
-              <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerToggle}>
-                <NavList />
-              </Drawer>
-            </>
-          ) : (
-            <>
-    
-              <Button color="inherit" component={NavLink} to="/" activeClassName="active">Home</Button>
-              <Button color="inherit" component={NavLink} to="/newpermission" activeClassName="active">New Permission</Button>
-    
-           <Button color="inherit" component={NavLink} to="/permissionhistory" activeClassName="active">Permissions History</Button>
-           <Button color="inherit" component={NavLink} to="/newleave" activeClassName="active">New Leave</Button>
-           <Button color="inherit" component={NavLink} to="/leavehistory" activeClassName="active">Leave History</Button>
-           <Button color="inherit" onClick={handleSignOut} component={NavLink} to="/signin" activeClassName="active">Logout  </Button>
-           
-              <Button color="inherit" onClick={toggleDarkMode}>{darkMode ? 'Light Mode' : 'Dark Mode'}</Button>
-            </>
+            )}
+          </Box>
+          {!isMobile && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 4, flexGrow: 1 }}>
+              {menuItems.map((item) => (
+                <StyledNavLink
+                  key={item.text}
+                  to={item.path}
+                >
+                  {item.text}
+                </StyledNavLink>
+              ))}
+            </Box>
+          )}
+          {!isMobile && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <DarkModeIcon sx={{ mr: 1 }} />
+                <Switch
+                  checked={darkMode}
+                  onChange={toggleDarkMode}
+                  color="primary"
+                />
+              </Box>
+              <IconButton color="inherit" onClick={handleSignOut}>
+                <ExitToAppIcon />
+              </IconButton>
+            </Box>
           )}
         </Toolbar>
-      </AppBar>
-    );
-  }
+      </StyledAppBar>
 
-  export default Navbar
+      <Drawer
+        variant="temporary"
+        anchor="left"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: 280,
+            backgroundColor: theme.palette.background.paper,
+          },
+        }}
+      >
+        {drawer}
+      </Drawer>
+    </>
+  );
+}
+
+export default Navbar
