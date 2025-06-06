@@ -1,154 +1,212 @@
 // App.js
-import React, { useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, TextField, Typography } from '@mui/material';
-import { Button, Link as MuiLink } from '@mui/material';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import React, { useState } from 'react';
+import {
+  Typography,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { Snackbar } from '@mui/material';
-import Alert from '@mui/material/Alert';
-import { formatISO } from 'date-fns';
-
-
-
-
+import { format, formatISO } from 'date-fns';
+import {
+  PageContainer,
+  ContentCard,
+  FormSection,
+  ActionBar,
+} from './styled/Layout';
+import {
+  StyledTextField,
+  StyledSelect,
+  StyledDatePicker,
+  StyledTimePicker,
+  PrimaryButton,
+} from './styled/Forms';
+import Cookies from 'js-cookie';
+import axios from 'axios';
 
 function NewLeave() {
-    const navigate = useNavigate();
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
-    const [leaveType, setLeaveType] = useState("");
-    const [reason, setReason] = useState("");
-    const [attachment, setAttachment] = useState(null);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState(null);
-    const [notification, setNotification] = useState({ open: false, message: "" });
-  
-  
-    
-    const userCookie = Cookies.get('user');
-    if (!userCookie) {
-      setError("User not authenticated");
-      return; // Exit the function if there's no user cookie
-    }
-  
-    const token = Cookies.get('token'); // Retrieve the token from cookies
-    if (!token) {
-      setError("User token is missing");
-      return; // Exit the function if there's no token
-    }
-  
-    const user = JSON.parse(userCookie);
-    if (!user || !user.user_id) {
-      setError("Invalid user data");
-      return; // Exit the function if the user object or user_id is missing
-    }
-  
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-  
-    
-      const leave = {
-        req_datetime: new Date().toISOString(),
-        req_type: leaveType.toLowerCase(),
-        date_from: formatISO(startDate, { representation: 'date' }),
-        date_to: formatISO(endDate, { representation: 'date' }),
-        time_from: "00:00:00",
-        time_to: "00:00:00",
-        user_id: user.user_id,
-        reason,
-        attachment: attachment ? attachment.name : "",
-      };
-    
-      try {
-        const response = await axios.post("https://api.dashoprojects.com/requests", leave, {
-          headers: {
-            Authorization: `Bearer ${token}` // Including the token in the Authorization header
-          }
-        });
-        console.log("Leave submitted:", response);
-    
-        setStartDate(new Date());
-        setEndDate(new Date());
-        setLeaveType("");
-        setReason("");
-        setAttachment(null);
-  
-        // Set success notification
-        setNotification({
-          open: true,
-          message: "Leave submitted successfully!",
-        });
-      } catch (error) {
-        console.error("Error submitting leave:", error.response.data);
-        setError(error.response.data);
-        setSuccess(false);
-      }
-    };
-    const handleCloseNotification = () => {
-      setNotification({ ...notification, open: false });
-    };
-    return (
-      <Container component={Paper} style={{ padding: 20 }}>
-        <Typography variant="h4" gutterBottom>New Leave</Typography>
-        {success && <p>Leave submitted successfully.</p>}
-        {error && <p>Error submitting leave: {error}</p>}
-        <form onSubmit={handleSubmit}>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <FormControl fullWidth style={{ marginBottom: 15 }}>
-              <DatePicker label="Start Date" selected={startDate} onChange={setStartDate} dateFormat="yyyy-MM-dd" required />
-            </FormControl>
-            <FormControl fullWidth style={{ marginBottom: 15 }}>
-              <DatePicker label="End Date" selected={endDate} onChange={setEndDate} dateFormat="yyyy-MM-dd" required />
-            </FormControl>
-          </LocalizationProvider>
-          <FormControl fullWidth variant="outlined" style={{ marginBottom: 15 }}>
-            <InputLabel htmlFor="leaveType">Leave Type</InputLabel>
-            <Select
-              label="Leave Type"
-              id="leaveType"
-              value={leaveType}
-              onChange={(e) => setLeaveType(e.target.value)}
-              required
-            >
-      <MenuItem value=""><em>Select Leave Type</em></MenuItem>
-      <MenuItem value="Annual Leave">Annual Leave</MenuItem>
-      <MenuItem value="Sick Leave">Sick Leave</MenuItem>
-      <MenuItem value="Emergency Leave">Emergency Leave</MenuItem>
-      <MenuItem value="Maternity Leave">Maternity Leave</MenuItem>
-      <MenuItem value="Other Leave">Other Leave</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            fullWidth
-            required
-            multiline
-            rows={4}
-            style={{ marginBottom: 15 }}
-          />
+  const [startDate, setStartDate] = useState(new Date());
+  const [startTime, setStartTime] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
+  const [reason, setReason] = useState('');
+  const [leaveType, setLeaveType] = useState('annual');
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-          <Button type="submit" variant="contained" color="primary" style={{ marginTop: 20 }}>
-            Submit
-          </Button>
-        </form>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const user = JSON.parse(Cookies.get('user'));
+
+    const formattedStartTime = format(startTime, 'HH:mm');
+    const formattedEndTime = format(endTime, 'HH:mm');
+
+    if (formattedStartTime === 'Invalid Date' || formattedEndTime === 'Invalid Date') {
+      setNotification({
+        open: true,
+        message: 'Please select valid start and end times',
+        severity: 'error',
+      });
+      return;
+    }
+
+    if (!user) {
+      console.error('User object is undefined');
+      return;
+    }
+
+    const leave = {
+      req_datetime: new Date().toISOString(),
+      req_type: leaveType,
+      date_from: formatISO(startDate, { representation: 'date' }),
+      date_to: formatISO(endDate, { representation: 'date' }),
+      time_from: formattedStartTime,
+      time_to: formattedEndTime,
+      user_id: user.user_id,
+      reason: reason,
+      status: 'pending',
+    };
+
+    const token = Cookies.get('token');
+
+    try {
+      await axios.post('https://api.dashoprojects.com/requests', leave, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setStartDate(new Date());
+      setStartTime(new Date());
+      setEndDate(new Date());
+      setEndTime(new Date());
+      setReason('');
+      setLeaveType('annual');
+
+      setNotification({
+        open: true,
+        message: 'Leave request submitted successfully!',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error(error);
+      setNotification({
+        open: true,
+        message: 'Error submitting request. Please try again.',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <PageContainer>
+        <ContentCard>
+          <Typography variant="h4" gutterBottom>
+            New Leave Request
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <FormSection>
+              <FormControl fullWidth>
+                <InputLabel id="leave-type-label">Leave Type</InputLabel>
+                <StyledSelect
+                  labelId="leave-type-label"
+                  value={leaveType}
+                  onChange={(e) => setLeaveType(e.target.value)}
+                  label="Leave Type"
+                >
+                  <MenuItem value="annual">Annual Leave</MenuItem>
+                  <MenuItem value="sick">Sick Leave</MenuItem>
+                  <MenuItem value="emergency">Emergency Leave</MenuItem>
+                </StyledSelect>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledDatePicker
+                  label="Start Date"
+                  value={startDate}
+                  onChange={setStartDate}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledTimePicker
+                  label="Start Time"
+                  value={startTime}
+                  onChange={setStartTime}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledDatePicker
+                  label="End Date"
+                  value={endDate}
+                  onChange={setEndDate}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <FormControl fullWidth>
+                <StyledTimePicker
+                  label="End Time"
+                  value={endTime}
+                  onChange={setEndTime}
+                  renderInput={(params) => <StyledTextField {...params} />}
+                />
+              </FormControl>
+
+              <StyledTextField
+                label="Reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                multiline
+                rows={4}
+                required
+              />
+
+              <ActionBar>
+                <PrimaryButton
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                >
+                  Submit Request
+                </PrimaryButton>
+              </ActionBar>
+            </FormSection>
+          </form>
+        </ContentCard>
+
         <Snackbar
           open={notification.open}
           autoHideDuration={6000}
           onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={handleCloseNotification} severity="success" sx={{ width: "100%" }}>
+          <Alert
+            onClose={handleCloseNotification}
+            severity={notification.severity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
             {notification.message}
           </Alert>
         </Snackbar>
-      </Container>
-    );
-  }
+      </PageContainer>
+    </LocalizationProvider>
+  );
+}
 
-  export default NewLeave
+export default NewLeave;
