@@ -5,8 +5,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import Cookies from 'js-cookie';
-import axios from 'axios';
-
+import axios from './utils/axiosInstance'; // adjust the path based on your file structure
 // Import components
 import Navbar from './components/Navbar';
 import SignIn from './components/SignIn';
@@ -25,34 +24,46 @@ function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const userCookie = Cookies.get('user');
-    if (userCookie) {
-      setUser(JSON.parse(userCookie));
-    }
+useEffect(() => {
+  const userCookie = Cookies.get('user');
+  const token = Cookies.get('token');
 
-    // Load dark mode preference from localStorage, default to true if not set
-    const savedDarkMode = localStorage.getItem('darkMode');
-    setDarkMode(savedDarkMode === null ? true : savedDarkMode === 'true');
-  }, []);
-
-  const handleSignIn = async (username, password) => {
+  if (userCookie && token) {
     try {
-      const response = await axios.post('https://api.dashoprojects.com/signin', {
-        user_id: username,
-        password,
-      });
-      if (response.data.token) {
-        Cookies.set('token', response.data.token);
-        Cookies.set('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
-      } else {
-        throw new Error('Failed to sign in');
-      }
-    } catch (error) {
-      throw new Error('Error signing in');
+      setUser(JSON.parse(userCookie));
+    } catch {
+      Cookies.remove('user');
+      Cookies.remove('token');
+      setUser(null);
     }
-  };
+  } else {
+    Cookies.remove('user');
+    Cookies.remove('token');
+    setUser(null);
+  }
+
+  const savedDarkMode = localStorage.getItem('darkMode');
+  setDarkMode(savedDarkMode === null ? true : savedDarkMode === 'true');
+}, []);
+
+const handleSignIn = async (username, password) => {
+  try {
+    const response = await axios.post('https://api.dashoprojects.com/signin', {
+      user_id: username,
+      password,
+    });
+
+    if (response.data.token) {
+      Cookies.set('token', response.data.token, { expires: 7 });
+      Cookies.set('user', JSON.stringify(response.data.user), { expires: 7 });
+      setUser(response.data.user);
+    } else {
+      throw new Error('Failed to sign in');
+    }
+  } catch (error) {
+    throw new Error('Error signing in');
+  }
+};
 
   const handleSignUp = async (credentials) => {
     try {

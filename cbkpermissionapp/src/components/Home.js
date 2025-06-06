@@ -19,6 +19,8 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HistoryIcon from '@mui/icons-material/History';
 import { styled } from '@mui/material/styles';
 import logo from '../logo.png';
+import useAuthGuard from '../hooks/useAuthGuard'; 
+
 
 const ActionCard = styled(ContentCard)(({ theme }) => ({
   display: 'flex',
@@ -74,6 +76,7 @@ const WelcomeContent = styled(Box)(({ theme }) => ({
 }));
 
 function Home() {
+  useAuthGuard();
   const navigate = useNavigate();
   const theme = useTheme();
 

@@ -9,7 +9,8 @@ import { AppBar, Toolbar, IconButton, Drawer, List, ListItem, ListItemText, useM
 import MenuIcon from '@mui/icons-material/Menu';
 import { Button, Link as MuiLink } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import axios from 'axios';
+import axios from '../utils/axiosInstance'; // adjust the path based on your file structure
+
 import { TextareaAutosize } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { TimePicker } from '@mui/x-date-pickers';
@@ -21,6 +22,8 @@ import Alert from '@mui/material/Alert';
 import { Link as RouterLink } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import { formatISO } from 'date-fns';
+import useAuthGuard from '../hooks/useAuthGuard'; 
+
 import {
   PageContainer,
   ContentCard,
@@ -36,6 +39,7 @@ import {
 } from './styled/Forms';
 
 function NewPermission() {
+    useAuthGuard();
   const [startDate, setStartDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
