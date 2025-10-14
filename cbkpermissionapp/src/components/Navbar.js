@@ -1,4 +1,4 @@
-// App.js
+// src/components/Navbar.js
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate } from 'react-router-dom';
 
@@ -11,17 +11,18 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HistoryIcon from '@mui/icons-material/History';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import PersonIcon from '@mui/icons-material/Person'; // <--- ADD THIS IMPORT
 import { styled } from '@mui/material/styles';
 import { LogoContainer } from './styled/Logo';
 import logo from '../logo.png';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'light' 
+  backgroundColor: theme.palette.mode === 'light'
     ? 'rgba(255, 255, 255, 0.72)'
     : 'rgba(28, 28, 30, 0.72)',
   backdropFilter: 'blur(20px)',
-  borderBottom: `1px solid ${theme.palette.mode === 'light' 
-    ? 'rgba(0, 0, 0, 0.1)' 
+  borderBottom: `1px solid ${theme.palette.mode === 'light'
+    ? 'rgba(0, 0, 0, 0.1)'
     : 'rgba(255, 255, 255, 0.1)'}`,
   color: theme.palette.text.primary,
 }));
@@ -76,6 +77,7 @@ function Navbar({ darkMode, toggleDarkMode, handleSignOut }) {
     { text: 'Permission History', icon: <HistoryIcon />, path: '/permissionhistory' },
     { text: 'New Leave', icon: <AddCircleOutlineIcon />, path: '/newleave' },
     { text: 'Leave History', icon: <HistoryIcon />, path: '/leavehistory' },
+    { text: 'Profile', icon: <PersonIcon />, path: '/profile' }, // <--- ADD THIS LINE
   ];
 
   const drawer = (
@@ -206,4 +208,4 @@ function Navbar({ darkMode, toggleDarkMode, handleSignOut }) {
   );
 }
 
-export default Navbar
+export default Navbar;

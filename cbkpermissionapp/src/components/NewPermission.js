@@ -1,29 +1,15 @@
-// App.js
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, Navigate, Switch } from 'react-router-dom';
+// src/components/NewPermission.js
+import React, { useState } from 'react';
 import Cookies from 'js-cookie';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, TextField, Typography } from '@mui/material';
-import { AppBar, Toolbar, IconButton, Drawer, List, ListItem, ListItemText, useMediaQuery, useTheme, Grid } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import { Button, Link as MuiLink } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import axios from '../utils/axiosInstance'; // adjust the path based on your file structure
-
-import { TextareaAutosize } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { TimePicker } from '@mui/x-date-pickers';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format } from 'date-fns';
-import { Snackbar } from '@mui/material';
+import { Typography, FormControl, MenuItem, Snackbar } from '@mui/material';
 import Alert from '@mui/material/Alert';
-import { Link as RouterLink } from 'react-router-dom';
-import CssBaseline from '@mui/material/CssBaseline';
-import { formatISO } from 'date-fns';
-import useAuthGuard from '../hooks/useAuthGuard'; 
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker, TimePicker } from '@mui/x-date-pickers';
+import { format, formatISO, isValid, differenceInMinutes } from 'date-fns';
+import useAuthGuard from '../hooks/useAuthGuard';
 
+import axios from '../utils/axiosInstance';
 import {
   PageContainer,
   ContentCard,
@@ -33,91 +19,108 @@ import {
 import {
   StyledTextField,
   StyledSelect,
-  StyledDatePicker,
-  StyledTimePicker,
   PrimaryButton,
 } from './styled/Forms';
 
 function NewPermission() {
-    useAuthGuard();
+  useAuthGuard();
+
   const [startDate, setStartDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date());
   const [reason, setReason] = useState('');
   const [reqType, setReqType] = useState('permission');
+
   const [notification, setNotification] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const user = JSON.parse(Cookies.get('user'));
+  const closeNote = () =>
+    setNotification((s) => ({ ...s, open: false }));
 
-    const formattedStartTime = format(startTime, 'HH:mm');
-    const formattedEndTime = format(endTime, 'HH:mm');
-
-    if (formattedStartTime === 'Invalid Date' || formattedEndTime === 'Invalid Date') {
-      setNotification({
-        open: true,
-        message: 'Please select valid start and end times',
-        severity: 'error',
-      });
-      return;
-    }
-
-    if (!user) {
-      console.error('User object is undefined');
-      return;
-    }
-
-    const permission = {
-      req_datetime: new Date().toISOString(),
-      req_type: reqType,
-      date_from: formatISO(startDate, { representation: 'date' }),
-      date_to: formatISO(endDate, { representation: 'date' }),
-      time_from: formattedStartTime,
-      time_to: formattedEndTime,
-      user_id: user.user_id,
-      reason: reason,
-      status: 'pending',
-    };
-
-    const token = Cookies.get('token');
-
+  const getUser = () => {
     try {
-      await axios.post('https://api.dashoprojects.com/requests', permission, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setStartDate(new Date());
-      setStartTime(new Date());
-      setEndDate(new Date());
-      setEndTime(new Date());
-      setReason('');
-
-      setNotification({
-        open: true,
-        message: 'Request submitted successfully!',
-        severity: 'success',
-      });
-    } catch (error) {
-      console.error(error);
-      setNotification({
-        open: true,
-        message: 'Error submitting request. Please try again.',
-        severity: 'error',
-      });
+      const raw = Cookies.get('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
     }
   };
 
-  const handleCloseNotification = () => {
-    setNotification({ ...notification, open: false });
+  const combineDateTime = (d, t) => {
+    const D = new Date(d);
+    const T = new Date(t);
+    return new Date(
+      D.getFullYear(),
+      D.getMonth(),
+      D.getDate(),
+      T.getHours(),
+      T.getMinutes(),
+      0,
+      0
+    );
   };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const user = (() => {
+    try {
+      const raw = Cookies.get('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })();
+
+  if (!user?.user_id) {
+    setNotification({ open: true, message: 'Session missing. Please sign in again.', severity: 'error' });
+    return;
+  }
+
+  const startDT = new Date(startDate);
+  startDT.setHours(new Date(startTime).getHours(), new Date(startTime).getMinutes(), 0, 0);
+
+  const endDT = new Date(endDate);
+  endDT.setHours(new Date(endTime).getHours(), new Date(endTime).getMinutes(), 0, 0);
+
+  const formattedStartDate = format(startDT, 'yyyy-MM-dd');
+  const formattedEndDate   = format(endDT,   'yyyy-MM-dd');
+  const formattedStartTime = format(startDT, 'HH:mm');
+  const formattedEndTime   = format(endDT,   'HH:mm');
+
+  if (formattedEndDate < formattedStartDate ||
+      (formattedEndDate === formattedStartDate && formattedEndTime <= formattedStartTime)) {
+    setNotification({ open: true, message: 'End time must be after start time.', severity: 'error' });
+    return;
+  }
+
+  const payload = {
+    req_datetime: new Date().toISOString(),
+    req_type: reqType,                  // 'permission' or 'swap' as your backend expects
+    date_from: formattedStartDate,      // 'YYYY-MM-DD'
+    date_to:   formattedEndDate,        // 'YYYY-MM-DD'
+    time_from: formattedStartTime,      // 'HH:mm'
+    time_to:   formattedEndTime,        // 'HH:mm'
+    user_id:   user.user_id,            // backend INSERT expects this
+    reason:    reason.trim(),
+    // DON'T send attachment here
+  };
+
+  try {
+    await axios.post('/requests', payload); // axiosInstance will add Authorization
+    setStartDate(new Date()); setStartTime(new Date());
+    setEndDate(new Date());   setEndTime(new Date());
+    setReason('');
+    setNotification({ open: true, message: 'Request submitted successfully!', severity: 'success' });
+  } catch (err) {
+    console.error('Submit error:', err?.response?.status, err?.response?.data);
+    const msg = err?.response?.data?.error || err?.response?.data?.message || 'Error creating permission request';
+    setNotification({ open: true, message: `Error submitting request: ${msg}`, severity: 'error' });
+  }
+};
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -126,10 +129,10 @@ function NewPermission() {
           <Typography variant="h4" gutterBottom>
             New Permission Request
           </Typography>
+
           <form onSubmit={handleSubmit}>
             <FormSection>
               <FormControl fullWidth>
-                <InputLabel id="request-type-label">Request Type</InputLabel>
                 <StyledSelect
                   labelId="request-type-label"
                   value={reqType}
@@ -142,38 +145,38 @@ function NewPermission() {
               </FormControl>
 
               <FormControl fullWidth>
-                <StyledDatePicker
+                <DatePicker
                   label="Start Date"
                   value={startDate}
-                  onChange={setStartDate}
-                  renderInput={(params) => <StyledTextField {...params} />}
+                  onChange={(v) => v && setStartDate(v)}
+                  slotProps={{ textField: { fullWidth: true } }}
                 />
               </FormControl>
 
               <FormControl fullWidth>
-                <StyledTimePicker
+                <TimePicker
                   label="Start Time"
                   value={startTime}
-                  onChange={setStartTime}
-                  renderInput={(params) => <StyledTextField {...params} />}
+                  onChange={(v) => v && setStartTime(v)}
+                  slotProps={{ textField: { fullWidth: true } }}
                 />
               </FormControl>
 
               <FormControl fullWidth>
-                <StyledDatePicker
+                <DatePicker
                   label="End Date"
                   value={endDate}
-                  onChange={setEndDate}
-                  renderInput={(params) => <StyledTextField {...params} />}
+                  onChange={(v) => v && setEndDate(v)}
+                  slotProps={{ textField: { fullWidth: true } }}
                 />
               </FormControl>
 
               <FormControl fullWidth>
-                <StyledTimePicker
+                <TimePicker
                   label="End Time"
                   value={endTime}
-                  onChange={setEndTime}
-                  renderInput={(params) => <StyledTextField {...params} />}
+                  onChange={(v) => v && setEndTime(v)}
+                  slotProps={{ textField: { fullWidth: true } }}
                 />
               </FormControl>
 
@@ -187,11 +190,7 @@ function NewPermission() {
               />
 
               <ActionBar>
-                <PrimaryButton
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                >
+                <PrimaryButton type="submit" variant="contained" size="large">
                   Submit Request
                 </PrimaryButton>
               </ActionBar>
@@ -202,15 +201,10 @@ function NewPermission() {
         <Snackbar
           open={notification.open}
           autoHideDuration={6000}
-          onClose={handleCloseNotification}
+          onClose={closeNote}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert
-            onClose={handleCloseNotification}
-            severity={notification.severity}
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
+          <Alert onClose={closeNote} severity={notification.severity} variant="filled" sx={{ width: '100%' }}>
             {notification.message}
           </Alert>
         </Snackbar>

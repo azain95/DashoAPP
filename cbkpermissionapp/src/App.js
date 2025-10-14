@@ -10,6 +10,7 @@ import axios from './utils/axiosInstance'; // adjust the path based on your file
 import Navbar from './components/Navbar';
 import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
+import Profile from'./components/Profile';
 import Home from './components/Home';
 import NewPermission from './components/NewPermission';
 import PermissionHistory from './components/PermissionHistory';
@@ -48,20 +49,20 @@ useEffect(() => {
 
 const handleSignIn = async (username, password) => {
   try {
-    const response = await axios.post('https://api.dashoprojects.com/signin', {
+    const { data } = await axios.post('/signin', {
       user_id: username,
       password,
     });
+    if (!data?.token || !data?.user) throw new Error('Invalid response');
 
-    if (response.data.token) {
-      Cookies.set('token', response.data.token, { expires: 7 });
-      Cookies.set('user', JSON.stringify(response.data.user), { expires: 7 });
-      setUser(response.data.user);
-    } else {
-      throw new Error('Failed to sign in');
-    }
-  } catch (error) {
-    throw new Error('Error signing in');
+    Cookies.set('token', data.token, { expires: 7 });
+    Cookies.set('user', JSON.stringify(data.user), { expires: 7 });
+    setUser(data.user);
+    return true;
+  } catch (err) {
+    // اظهر السبب الحقيقي بالكونسول وسلّم UI رسالة واضحة
+    console.error('SignIn failed:', err?.response?.data || err.message);
+    throw new Error('Invalid username or password');
   }
 };
 
@@ -113,6 +114,8 @@ const handleSignIn = async (username, password) => {
                 <Route path="/newleave" element={<NewLeave />} />
                 <Route path="/leavehistory" element={<LeaveHistory />} />
                 <Route path="*" element={<Navigate to="/" />} />
+                <Route path="/Profile" element={<Profile />} />
+
               </>
             ) : (
               <>
