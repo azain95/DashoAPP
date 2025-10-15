@@ -1,0 +1,52 @@
+# OSX
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Xcode
+ios/build/
+ios/Pods/
+ios/*.xcworkspace
+!default.xcworkspace
+ios/*.xcuserstate
+ios/DerivedData/
+
+# Android
+android/app/build/
+android/app/release/
+android/.gradle/
+android/build/
+*.apk
+*.ap_
+*.aab
+
+# Gradle
+.gradle/
+build/
+local.properties
+*.iml
+
+# Metro
+.metro-health-check*
+
+# Watchman
+.watchmanconfig
+
+# Testing
+coverage/
+
+# Misc
+.vscode/
+.idea/
+*.log
+*.bak
+*.swp
+*~
