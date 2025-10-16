@@ -1,12 +1,8 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
 
-react {
-}
-
 def enableProguardInReleaseBuilds = false
 def jscFlavor = 'org.webkit:android-jsc:+'
-def enableHermes = project.ext.react.get("enableHermes", true)
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -14,6 +10,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.dashomobile"
+    
     defaultConfig {
         applicationId "com.dashomobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -46,12 +43,10 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android")
     implementation("com.facebook.react:flipper-integration")
-
-    if (enableHermes) {
-        implementation("com.facebook.react:hermes-android")
-    } else {
-        implementation jscFlavor
-    }
+    
+    // Hermes
+    implementation("com.facebook.react:hermes-android")
 }
 
-apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+applyNativeModulesAppBuildGradle(project)
