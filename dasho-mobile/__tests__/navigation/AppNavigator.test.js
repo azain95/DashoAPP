@@ -28,7 +28,7 @@ jest.mock('../../src/screens/ProfileScreen', () => ({
 
 describe('AppNavigator', () => {
   it('should render without crashing', () => {
-    const { container } = render(
+    const { root } = render(
       <PaperProvider>
         <ThemeProvider>
           <NavigationContainer>
@@ -38,6 +38,6 @@ describe('AppNavigator', () => {
       </PaperProvider>
     );
 
-    expect(container).toBeTruthy();
+    expect(root).toBeTruthy();
   });
 });
