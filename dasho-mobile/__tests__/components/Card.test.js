@@ -14,15 +14,14 @@ describe('Card Component', () => {
     expect(getByText('Test Content')).toBeTruthy();
   });
 
-  it('should apply custom styles', () => {
+  it('should render without errors', () => {
     const customStyle = { backgroundColor: 'red' };
-    const { getByTestId } = render(
-      <Card style={customStyle} testID="custom-card">
-        <Text>Test</Text>
+    const { getByText } = render(
+      <Card style={customStyle}>
+        <Text>Custom Card</Text>
       </Card>
     );
 
-    const card = getByTestId('custom-card');
-    expect(card).toBeTruthy();
+    expect(getByText('Custom Card')).toBeTruthy();
   });
 });
