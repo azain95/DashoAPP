@@ -35,6 +35,9 @@ android/local.properties
 # Gradle
 .gradle/
 build/
+*.zip
+gradle-*.zip
+android/gradle/wrapper/*.zip
 
 # Metro
 .metro-health-check*
