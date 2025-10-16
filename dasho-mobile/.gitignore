@@ -5,6 +5,8 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+yarn-debug.log*
+.yarn-integrity
 
 # Environment
 .env
@@ -18,12 +20,14 @@ ios/*.xcworkspace
 !default.xcworkspace
 ios/*.xcuserstate
 ios/DerivedData/
+ios/.xcode.env.local
 
 # Android
 android/app/build/
 android/app/release/
 android/.gradle/
 android/build/
+android/local.properties
 *.apk
 *.ap_
 *.aab
@@ -31,8 +35,6 @@ android/build/
 # Gradle
 .gradle/
 build/
-local.properties
-*.iml
 
 # Metro
 .metro-health-check*
@@ -42,11 +44,18 @@ local.properties
 
 # Testing
 coverage/
+*.log
 
 # Misc
 .vscode/
 .idea/
-*.log
 *.bak
 *.swp
 *~
+
+# CocoaPods
+ios/Podfile.lock
+
+# React Native
+.expo/
+.expo-shared/
