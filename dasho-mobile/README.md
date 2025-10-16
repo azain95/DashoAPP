@@ -1,152 +1,172 @@
 # Dasho Mobile
 
-A modern React Native mobile application for employee leave and permission management.
+> Modern React Native mobile application for employee leave and permission management
+
+[![React Native](https://img.shields.io/badge/React%20Native-0.73.2-blue.svg)](https://reactnative.dev/)
+[![Node](https://img.shields.io/badge/Node-%3E%3D18-green.svg)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-Private-red.svg)]()
 
 ## Features
 
 - 🔐 **Authentication** - Secure login with token-based auth
-- 🏠 **Dashboard** - Overview of requests, tasks, and stats
+- 🏠 **Dashboard** - Overview of requests, tasks, and statistics
 - 📋 **Requests Management** - Create and track permission and leave requests
-- ✅ **Tasks** - Task management and assignments
+- ✅ **Tasks** - Task management system (ready for implementation)
 - 🔔 **Activity Feed** - Notifications and announcements
 - 👤 **Profile** - User profile and settings
-- 🎨 **Dark Mode** - Toggle between light and dark themes
+- 🌓 **Dark Mode** - Toggle between light and dark themes
 - 📱 **Cross-platform** - Works on iOS and Android
 
 ## Tech Stack
 
-- **React Native 0.73**
-- **React Navigation 6** - Navigation
-- **React Native Paper 5** - Material Design UI components
-- **AsyncStorage** - Local storage
-- **Axios** - API integration
-- **React Native Reanimated** - Smooth animations
+- **React Native 0.73.2** - Mobile framework
+- **React Navigation 6** - Navigation solution
+- **React Native Paper 5** - Material Design components
+- **AsyncStorage** - Local data persistence
+- **Axios** - HTTP client
 - **date-fns** - Date manipulation
+- **React Native Reanimated** - Smooth animations
+
+## Prerequisites
+
+### Required
+- Node.js >= 18
+- npm >= 9 or yarn
+- React Native CLI
+
+### Platform-Specific
+
+**iOS Development (macOS only):**
+- Xcode 14+
+- CocoaPods (`sudo gem install cocoapods`)
+- iOS Simulator or physical device
+
+**Android Development:**
+- JDK 17
+- Android Studio
+- Android SDK (API 34)
+- Android Emulator or physical device
+
+## Quick Start
+
+See [START.md](./START.md) for detailed setup instructions.
+
+```bash
+# Install dependencies
+yarn install
+
+# iOS setup (macOS only)
+cd ios && pod install && cd ..
+
+# Run on iOS
+yarn ios
+
+# Run on Android
+yarn android
+```
+
+## Documentation
+
+- **[START.md](./START.md)** - Quick start guide
+- **[SETUP.md](./SETUP.md)** - Detailed setup instructions
+- **[CHANGELOG.md](./CHANGELOG.md)** - Version history
+- **[ANDROID_FIX_GUIDE.md](./ANDROID_FIX_GUIDE.md)** - Android troubleshooting
 
 ## Project Structure
 
 ```
 dasho-mobile/
+├── android/          # Android native code
+├── ios/              # iOS native code
 ├── src/
-│   ├── components/      # Reusable UI components
-│   ├── screens/         # App screens
-│   ├── navigation/      # Navigation setup
-│   ├── context/         # React Context (Auth, Theme)
-│   ├── utils/           # Helpers, API, storage
-│   ├── theme/           # Colors, spacing, themes
-│   └── App.js           # Root component
-├── android/             # Android native code
-├── ios/                 # iOS native code
-└── package.json         # Dependencies
+│   ├── components/   # Reusable UI components
+│   ├── screens/      # App screens
+│   ├── navigation/   # Navigation setup
+│   ├── context/      # React Context (Auth, Theme)
+│   ├── utils/        # Helpers, API, storage
+│   ├── theme/        # Colors, spacing, themes
+│   ├── config/       # App configuration
+│   └── App.js        # Root component
+├── __tests__/        # Test files
+└── package.json      # Dependencies & scripts
 ```
 
-## Setup Instructions
+## Available Scripts
 
-### Prerequisites
-
-- Node.js >= 18
-- npm or yarn
-- React Native development environment setup
-  - For iOS: Xcode, CocoaPods
-  - For Android: Android Studio, JDK
-
-### Installation
-
-1. Install dependencies:
 ```bash
-cd dasho-mobile
-yarn install
-```
-
-2. For iOS, install pods:
-```bash
-cd ios
-pod install
-cd ..
-```
-
-3. Configure API endpoint in `.env`:
-```
-API_BASE_URL=http://localhost:5000  # For local development
-# API_BASE_URL=https://api.dashoprojects.com  # For production
-```
-
-### Running the App
-
-**iOS:**
-```bash
-yarn ios
-```
-
-**Android:**
-```bash
-yarn android
-```
-
-**Start Metro Bundler:**
-```bash
-yarn start
+yarn start          # Start Metro bundler
+yarn android        # Run on Android
+yarn ios            # Run on iOS
+yarn test           # Run tests
+yarn test:watch     # Run tests in watch mode
+yarn test:coverage  # Run tests with coverage
+yarn lint           # Run ESLint
+yarn lint:fix       # Fix ESLint errors
+yarn format         # Format code with Prettier
+yarn clean          # Clean all caches and reinstall
+yarn clean:android  # Clean Android build
+yarn clean:ios      # Clean iOS build
 ```
 
 ## Environment Configuration
 
-The app uses `.env` file for configuration:
+Copy `.env.example` to `.env` and configure:
 
-- `API_BASE_URL` - Backend API URL
+```env
+# Android Emulator
+API_BASE_URL=http://10.0.2.2:5000
 
-### Development
-Use `http://localhost:5000` or your local backend URL
+# iOS Simulator
+API_BASE_URL=http://localhost:5000
 
-### Production
-Switch to your Digital Ocean droplet URL:
-```
+# Production
 API_BASE_URL=https://api.dashoprojects.com
 ```
 
-## Navigation Structure
+## Testing
 
-### Bottom Tabs (Main)
-1. **Home** - Dashboard with quick actions
-2. **Requests** - Permission and Leave history
-3. **Tasks** - Task management
-4. **Activity** - Notifications and announcements
-5. **Profile** - User profile and settings
+```bash
+# Run all tests
+yarn test
 
-### Stack Screens
-- New Permission
-- New Leave
-- Login/Signup (when not authenticated)
+# Watch mode
+yarn test:watch
 
-## API Integration
+# With coverage
+yarn test:coverage
+```
 
-The app communicates with the backend API using Axios:
+## Troubleshooting
 
-- Base URL: Configured via `.env`
-- Authentication: Bearer token stored in AsyncStorage
-- Auto-logout on 401 responses
+See [ANDROID_FIX_GUIDE.md](./ANDROID_FIX_GUIDE.md) for common issues and solutions.
 
-### Endpoints Used:
-- `POST /signin` - User login
-- `POST /signup` - User registration
-- `GET /requests` - Fetch requests
-- `POST /requests` - Create new request
-- More endpoints to be added...
+**Quick fixes:**
+```bash
+# Clean everything
+yarn clean
 
-## Future Features
+# Android issues
+yarn clean:android
 
-- [ ] Push notifications
-- [ ] Biometric authentication
-- [ ] Offline mode
-- [ ] File attachments
-- [ ] Team management
-- [ ] Advanced analytics
-- [ ] Break system
-- [ ] Circular management
+# iOS issues
+yarn clean:ios
 
-## Version
+# Reset Metro
+yarn start --reset-cache
+```
 
-**1.0.0** - Initial Release
+## Contributing
+
+1. Create feature branch
+2. Make changes
+3. Run tests: `yarn test`
+4. Run lint: `yarn lint`
+5. Submit for review
 
 ## License
 
 Private - Dasho Project
+
+## Support
+
+For issues or questions, contact the development team.
