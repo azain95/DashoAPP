@@ -1,0 +1,12 @@
+node_modules/
+android/
+ios/
+build/
+coverage/
+__mocks__/
+metro.config.js
+babel.config.js
+jest.config.js
+jest.setup.js
+.eslintrc.js
+.prettierrc.js
