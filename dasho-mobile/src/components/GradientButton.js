@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, Pressable, View } from 'react-native';
 import { Text, ActivityIndicator } from 'react-native-paper';
-import { LinearGradient } from 'react-native-linear-gradient';
 import { spacing, borderRadius } from '../theme/spacing';
 import { useTheme } from '../context/ThemeContext';
 
@@ -14,7 +13,6 @@ export const GradientButton = ({
   ...props
 }) => {
   const { theme } = useTheme();
-  const colors = theme.custom.gradient;
 
   return (
     <Pressable
