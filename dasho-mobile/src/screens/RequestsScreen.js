@@ -32,9 +32,24 @@ export const RequestsScreen = ({ navigation }) => {
       </View>
 
       {selectedTab === 'permissions' ? (
-        <PermissionHistoryTab navigation={navigation} />
+        <PermissionHistoryTab
+          navigation={navigation}
+          filterReqTypes={[
+            'permission',
+            'swap',
+          ]}
+        />
       ) : (
-        <LeaveHistoryTab navigation={navigation} />
+        <LeaveHistoryTab
+          navigation={navigation}
+          filterReqTypes={[
+            'annual leave',
+            'sick leave',
+            'other leave',
+            'emergency leave',
+            'maternity leave',
+          ]}
+        />
       )}
     </View>
   );

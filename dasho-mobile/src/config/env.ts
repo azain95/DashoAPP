@@ -1,14 +1,11 @@
+// src/config/env.js
 import { Platform } from 'react-native';
 
-// Default fallback for Android emulator
-const DEFAULT_ANDROID_URL = 'http://10.0.2.2:5000';
-const DEFAULT_IOS_URL = 'http://localhost:5000';
+const ENV_URL = (typeof process !== 'undefined' && process.env && process.env.API_BASE_URL) || '';
 
-// Get from environment or use platform-specific default
-export const API_BASE_URL =
-  process.env.API_BASE_URL ||
-  (Platform.OS === 'android' ? DEFAULT_ANDROID_URL : DEFAULT_IOS_URL);
+const LOCAL_FALLBACK =
+  Platform.OS === 'android'
+    ? 'http://10.0.2.2:5000'
+    : 'http://localhost:5000';
 
-export const config = {
-  apiBaseUrl: API_BASE_URL,
-};
+export const API_BASE_URL = ENV_URL && ENV_URL.trim().length ? ENV_URL : LOCAL_FALLBACK;

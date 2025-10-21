@@ -32,13 +32,13 @@ api.interceptors.response.use(
   async (error) => {
     const status = error?.response?.status;
     const url = error?.config?.url || '';
-    
+
     if (status === 401 && !url.includes('/signin')) {
       // Clear stored credentials on unauthorized
       await storage.clearAll();
       // Navigation will be handled by context
     }
-    
+
     return Promise.reject(error);
   }
 );

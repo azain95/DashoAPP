@@ -6,7 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { TextInput, SegmentedButtons, Snackbar } from 'react-native-paper';
+import { TextInput, SegmentedButtons, Snackbar, Button, Text } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../context/ThemeContext';
 import { GradientButton } from '../components/GradientButton';
@@ -15,6 +15,8 @@ import { spacing } from '../theme/spacing';
 import { formatDate, formatTime } from '../utils/helpers';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import DocumentPicker from 'react-native-document-picker';
+import { uploadAttachment } from '../utils/upload';
 
 export const NewPermissionScreen = ({ navigation }) => {
   const { theme } = useTheme();
@@ -32,6 +34,38 @@ export const NewPermissionScreen = ({ navigation }) => {
   const [showEndDate, setShowEndDate] = useState(false);
   const [showEndTime, setShowEndTime] = useState(false);
   const [snackbar, setSnackbar] = useState({ visible: false, message: '', type: 'success' });
+  const maxReason = 300;
+  const [attachment, setAttachment] = useState(null); // { uri, name, type, url? }
+  const [uploading, setUploading] = useState(false);
+
+  const pickAttachment = async () => {
+    try {
+      const res = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.images, DocumentPicker.types.pdf],
+        copyTo: 'cachesDirectory',
+      });
+      if (res?.uri) {
+        setAttachment({ uri: res.uri, name: res.name, type: res.type });
+      }
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        console.warn('Attachment pick error', err);
+      }
+    }
+  };
+
+  const ensureUploaded = async () => {
+    if (!attachment) return null;
+    if (attachment.url) return attachment.url;
+    setUploading(true);
+    try {
+      const url = await uploadAttachment(attachment);
+      setAttachment((a) => ({ ...a, url }));
+      return url;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!reason.trim()) {
@@ -50,35 +84,44 @@ export const NewPermissionScreen = ({ navigation }) => {
       return;
     }
 
+    // Backend expects: req_type, date_from, date_to, time_from, time_to, reason, (optional) attachment_url
+    // Do NOT send user_id or req_datetime (server sets them)
+    const attachment_url = await ensureUploaded();
+
     const payload = {
-      req_datetime: new Date().toISOString(),
       req_type: reqType,
-      date_from: formatDate(startDT),
-      date_to: formatDate(endDT),
-      time_from: formatTime(startTime),
-      time_to: formatTime(endTime),
-      user_id: user?.user_id,
+      date_from: formatDate(startDT, 'yyyy-MM-dd'),
+      date_to: formatDate(endDT, 'yyyy-MM-dd'),
+      time_from: formatTime(startTime, 'HH:mm'),
+      time_to: formatTime(endTime, 'HH:mm'),
       reason: reason.trim(),
+      attachment_url: attachment_url || null,
     };
 
     setLoading(true);
     try {
       await api.post('/requests', payload);
       setSnackbar({ visible: true, message: 'Request submitted successfully!', type: 'success' });
-      
+
       // Reset form
       setReason('');
       setStartDate(new Date());
       setStartTime(new Date());
       setEndDate(new Date());
       setEndTime(new Date());
-      
+
       setTimeout(() => {
         navigation.goBack();
       }, 1500);
     } catch (error) {
-      console.error('Submit error:', error);
-      const message = error?.response?.data?.message || 'Failed to submit request';
+      console.error('Submit error:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        (error?.response?.status === 400 ? 'Invalid fields. Please review your inputs.' : 'Failed to submit request');
       setSnackbar({ visible: true, message, type: 'error' });
     } finally {
       setLoading(false);
@@ -149,11 +192,31 @@ export const NewPermissionScreen = ({ navigation }) => {
           multiline
           numberOfLines={4}
           style={styles.textArea}
+          right={<TextInput.Affix text={`${reason.length}/${maxReason}`} />}
+          maxLength={maxReason}
         />
+
+        <View style={styles.input}>
+          <Button
+            mode="outlined"
+            icon="paperclip"
+            onPress={pickAttachment}
+            loading={uploading}
+            disabled={uploading}
+          >
+            {attachment?.name ? `Attached: ${attachment.name}` : 'Add attachment (image/PDF)'}
+          </Button>
+          {attachment?.url ? (
+            <Text variant="labelSmall" style={{ marginTop: 6 }}>
+              Uploaded
+            </Text>
+          ) : null}
+        </View>
 
         <GradientButton
           onPress={handleSubmit}
           loading={loading}
+          disabled={loading || !reason.trim()}
           style={styles.submitButton}
         >
           Submit Request
@@ -216,6 +279,7 @@ export const NewPermissionScreen = ({ navigation }) => {
           label: 'Dismiss',
           onPress: () => setSnackbar({ ...snackbar, visible: false }),
         }}
+        style={snackbar.type === 'error' ? { backgroundColor: '#B00020' } : {}}
       >
         {snackbar.message}
       </Snackbar>
