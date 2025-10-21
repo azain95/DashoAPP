@@ -19,21 +19,14 @@ android {
         versionName "1.0.0"
     }
 
-    signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-    }
+    // signingConfigs block removed as per instructions
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            // signingConfig signingConfigs.debug removed
         }
         release {
-            signingConfig signingConfigs.debug
+            // signingConfig signingConfigs.debug removed
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
@@ -50,3 +43,15 @@ dependencies {
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 applyNativeModulesAppBuildGradle(project)
+
+
+project.ext.vectoricons = [
+        iconFontNames: [
+                'MaterialCommunityIcons.ttf',
+                'MaterialIcons.ttf',
+                'Feather.ttf',
+                'FontAwesome.ttf',
+                'Ionicons.ttf'
+        ]
+]
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"

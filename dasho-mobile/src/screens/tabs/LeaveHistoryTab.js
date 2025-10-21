@@ -9,7 +9,7 @@ import { spacing } from '../../theme/spacing';
 import { formatDate, formatTime, getStatusColor } from '../../utils/helpers';
 import api from '../../utils/api';
 
-export const LeaveHistoryTab = ({ navigation }) => {
+export const LeaveHistoryTab = ({ navigation, filterReqTypes = ['annual leave','sick leave','other leave','emergency leave','maternity leave'] }) => {
   const { theme } = useTheme();
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -111,10 +111,15 @@ export const LeaveHistoryTab = ({ navigation }) => {
     );
   }
 
+  // Ensure client-side filtering in case backend doesn't filter correctly
+  const filteredLeaves = (leaves || []).filter((r) =>
+    filterReqTypes.includes(String(r?.req_type || '').toLowerCase())
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <FlatList
-        data={leaves}
+        data={filteredLeaves}
         renderItem={renderItem}
         keyExtractor={(item, index) => `leave-${item.id || index}`}
         contentContainerStyle={styles.list}
